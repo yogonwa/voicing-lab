@@ -8,14 +8,18 @@ You know what chords to play from a lead sheet (Dm7, G7, Cmaj7), but you're stuc
 
 ## Current Status
 
-**Phase 2 Complete** ✅
+**Phase 3 Complete** ✅
 
 - [x] Chord tone calculator (12 roots × 5 qualities)
 - [x] Voicing templates (Shell A, Shell B, Open)
 - [x] Interactive chord calculator with audio preview
 - [x] Audio playback with Tone.js piano samples
-- [x] Voicing display with play progression
-- [x] 72 tests passing
+- [x] **Piano keyboard visualization (4 octaves)**
+- [x] **Color-coded chord roles (R, 3, 5, 7)**
+- [x] **Hand differentiation (LH/RH borders)**
+- [x] **Audio-synced highlighting**
+- [x] **Sticky highlights for study mode**
+- [x] 89 tests passing
 
 ## Tech Stack
 
@@ -36,6 +40,12 @@ src/
 │   └── __mocks__/                # Jest mocks
 │       └── audioEngine.ts
 ├── components/
+│   ├── PianoKeyboard/            # Piano visualization (Phase 3)
+│   │   ├── PianoKeyboard.tsx     # Main keyboard component
+│   │   ├── PianoKey.tsx          # Individual key
+│   │   ├── KeyboardLegend.tsx    # Color/hand legend
+│   │   ├── utils.ts              # Note mapping
+│   │   └── types.ts              # TypeScript interfaces
 │   ├── ChordToneDisplay.tsx      # Interactive chord calculator
 │   ├── VoicingDisplay.tsx        # ii-V-I progression display
 │   └── index.ts                  # Barrel exports
@@ -60,13 +70,14 @@ npm test -- --coverage --watchAll=false
 
 ## Test Coverage
 
-| Module | Coverage | Notes |
-|--------|----------|-------|
-| chordCalculator.ts | 100% | All chord tone calculations |
-| voicingTemplates.ts | 100% | Template definitions |
-| voicingGenerator.ts | 97% | Voicing generation |
-| audioEngine.ts | 0% | Mocked in tests (Tone.js) |
-| Components | ~50% | UI interactions |
+| Module | Tests | Notes |
+|--------|-------|-------|
+| chordCalculator.ts | 16 | All chord tone calculations |
+| voicingTemplates.ts | 13 | Template definitions |
+| voicingGenerator.ts | 28 | Voicing generation + close position |
+| audioEngine.ts | 0 | Mocked in tests (Tone.js) |
+| Components | 32 | UI interactions |
+| **Total** | **89** | All passing ✅ |
 
 ## Architecture
 
@@ -75,7 +86,7 @@ npm test -- --coverage --watchAll=false
 ```
 Layer 1: chordCalculator    → WHAT notes (D, F, A, C)
 Layer 2: voicingTemplates   → WHICH hand plays what (LH: root, RH: 3rd+7th)
-Layer 3: voicingGenerator   → WHERE on piano (D2, F3, C4)
+Layer 3: voicingGenerator   → WHERE on piano (D3, F4, C5)
 ```
 
 ### Voicing Templates
@@ -86,13 +97,22 @@ Layer 3: voicingGenerator   → WHERE on piano (D2, F3, C4)
 | **Shell Position B** | root | 7th, 3rd | Inverted 1-7-3 shell |
 | **Open Voicing** | root, 5th | 3rd, 7th | Fuller sound |
 
+### Keyboard Highlighting
+
+| State | Behavior |
+|-------|----------|
+| Default | No highlights (clean) |
+| Template change | Clears highlights |
+| Single chord click | **Sticky** highlight for study |
+| Progression play | Synced highlights → clear at end |
+
 ## Roadmap
 
 See [docs/MVP_scope.md](docs/MVP_scope.md) for full specification.
 
 - **Phase 1:** ✅ Text-based algorithm proof of concept
 - **Phase 2:** ✅ Audio playback with Tone.js
-- **Phase 3:** Piano keyboard visualization
+- **Phase 3:** ✅ Piano keyboard visualization
 - **Phase 4:** Polish and ship MVP
 
 ## License

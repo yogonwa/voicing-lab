@@ -1,0 +1,77 @@
+/**
+ * KeyboardLegend Styles
+ */
+
+.keyboard-legend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #2d3748;
+  border-radius: 8px;
+  margin-top: 12px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.keyboard-legend__roles {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.keyboard-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.keyboard-legend__color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+/* Role colors */
+.keyboard-legend__item--root .keyboard-legend__color {
+  background: #fc8181;
+}
+
+.keyboard-legend__item--third .keyboard-legend__color {
+  background: #63b3ed;
+}
+
+.keyboard-legend__item--fifth .keyboard-legend__color {
+  background: #68d391;
+}
+
+.keyboard-legend__item--seventh .keyboard-legend__color {
+  background: #b794f4;
+}
+
+/* Hands */
+.keyboard-legend__hands {
+  display: flex;
+  gap: 20px;
+  font-size: 0.75rem;
+  color: #a0aec0;
+}
+
+.keyboard-legend__hand {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+.keyboard-legend__hand--left {
+  font-weight: 700;
+}
+
+.keyboard-legend__hand--right {
+  font-weight: 400;
+}
+

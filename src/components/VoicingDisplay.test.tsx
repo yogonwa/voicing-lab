@@ -60,9 +60,9 @@ describe('VoicingDisplay', () => {
   it('displays notes for Shell Position A', () => {
     render(<VoicingDisplay />);
 
-    // Dm7 in Shell A: LH = D2, RH = F3, C4
-    expect(screen.getByText('D2')).toBeInTheDocument();
-    expect(screen.getByText('F3, C4')).toBeInTheDocument();
+    // Dm7 in Shell A: LH = D3, RH = F4, C5
+    expect(screen.getByText('D3')).toBeInTheDocument();
+    expect(screen.getByText('F4, C5')).toBeInTheDocument();
   });
 
   it('displays different notes for Shell Position B', () => {
@@ -71,9 +71,9 @@ describe('VoicingDisplay', () => {
     // Switch to Shell B
     fireEvent.click(screen.getByText('Shell Position B'));
 
-    // Dm7 in Shell B: LH = D2, RH = C3, F4
-    expect(screen.getByText('D2')).toBeInTheDocument();
-    expect(screen.getByText('C3, F4')).toBeInTheDocument();
+    // Dm7 in Shell B: LH = D3, RH = C4, F4
+    expect(screen.getByText('D3')).toBeInTheDocument();
+    expect(screen.getByText('C4, F4')).toBeInTheDocument();
   });
 
   it('displays template description', () => {
@@ -99,4 +99,3 @@ describe('VoicingDisplay', () => {
     expect(screen.getByText(/Play Progression/i)).toBeInTheDocument();
   });
 });
-

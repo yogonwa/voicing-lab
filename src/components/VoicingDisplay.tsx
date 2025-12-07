@@ -2,25 +2,30 @@
  * VoicingDisplay Component
  *
  * Display of jazz piano voicings for the ii-V-I progression.
- * Shows chord names, left hand notes, and right hand notes for each
- * voicing style. Includes audio playback.
+ * Includes piano keyboard visualization, chord cards, and audio playback.
  *
- * Phase 2: Added audio playback with Tone.js
+ * Phase 3: Added piano keyboard visualization with audio sync
+ *
+ * Keyboard Highlighting Behavior:
+ * - Default/template selected: No highlights (clean slate for study)
+ * - During progression: Highlight current chord, clear when done
+ * - Single chord clicked: Highlight and KEEP until next action (sticky)
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import './VoicingDisplay.css';
 import {
   ALL_TEMPLATES,
   PROGRESSIONS,
   VoicingTemplate,
   VoicedChord,
+  Chord,
   initAudio,
   isAudioReady,
-  isAudioLoading,
   playVoicing,
   playProgression,
 } from '../lib';
+import { PianoKeyboard, KeyboardLegend, getActiveNotes, ActiveNote } from './PianoKeyboard';
 
 // ============================================
 // CONSTANTS
@@ -28,6 +33,13 @@ import {
 
 // ii-V-I chord names in C major
 const CHORD_NAMES = ['Dm7', 'G7', 'Cmaj7'];
+
+// ii-V-I chords for role calculation
+const II_V_I_CHORDS: Chord[] = [
+  { root: 'D', quality: 'min7' },
+  { root: 'G', quality: 'dom7' },
+  { root: 'C', quality: 'maj7' },
+];
 
 // ============================================
 // SUB-COMPONENTS
@@ -62,16 +74,16 @@ function StyleSelector({ templates, selectedId, onSelect }: StyleSelectorProps) 
 interface ChordCardProps {
   name: string;
   voicing: VoicedChord;
-  isPlaying: boolean;
+  isHighlighted: boolean;
   onPlay: () => void;
 }
 
 /**
  * Display a single chord's voicing with play button
  */
-function ChordCard({ name, voicing, isPlaying, onPlay }: ChordCardProps) {
+function ChordCard({ name, voicing, isHighlighted, onPlay }: ChordCardProps) {
   return (
-    <div className={`chord-card ${isPlaying ? 'playing' : ''}`}>
+    <div className={`chord-card ${isHighlighted ? 'playing' : ''}`}>
       <h3 className="chord-name">{name}</h3>
       <div className="chord-notes">
         <div className="hand left-hand">
@@ -119,13 +131,18 @@ function PlayControls({ onPlayAll, isLoading, isPlaying }: PlayControlsProps) {
 
 /**
  * Main voicing display component.
- * Shows ii-V-I progression with selectable voicing styles and audio playback.
+ * Shows ii-V-I progression with piano keyboard, voicing cards, and audio playback.
  */
 export function VoicingDisplay() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(ALL_TEMPLATES[0].id);
   const [audioReady, setAudioReady] = useState(isAudioReady());
   const [loading, setLoading] = useState(false);
+
+  // Highlighting state:
+  // - playingIndex: Currently playing during progression (transient)
+  // - stickyChordIndex: User clicked a chord, keep highlighted (persistent)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [stickyChordIndex, setStickyChordIndex] = useState<number | null>(null);
   const [isPlayingProgression, setIsPlayingProgression] = useState(false);
 
   // Get the progression for the selected template
@@ -133,6 +150,29 @@ export function VoicingDisplay() {
 
   // Get the selected template for display
   const selectedTemplate = ALL_TEMPLATES.find((t) => t.id === selectedTemplateId);
+
+  // Determine which chord index to highlight (if any)
+  // Priority: playingIndex (during progression) > stickyChordIndex (after single click)
+  const highlightedIndex = playingIndex ?? stickyChordIndex;
+
+  // Calculate active notes for the keyboard
+  // Returns empty array when nothing is highlighted (default state)
+  const activeNotes: ActiveNote[] = useMemo(() => {
+    if (highlightedIndex === null) {
+      return []; // No highlights - clean keyboard
+    }
+    const voicing = progression[highlightedIndex];
+    const chord = II_V_I_CHORDS[highlightedIndex];
+    return getActiveNotes(voicing, chord);
+  }, [progression, highlightedIndex]);
+
+  /**
+   * Handle template change - clear any sticky highlight
+   */
+  const handleTemplateSelect = useCallback((templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setStickyChordIndex(null); // Clear sticky on template change
+  }, []);
 
   /**
    * Initialize audio on first interaction
@@ -155,30 +195,29 @@ export function VoicingDisplay() {
   }, [audioReady, loading]);
 
   /**
-   * Play a single chord
+   * Play a single chord - keeps highlight sticky after playback
    */
   const handlePlayChord = useCallback(
     async (index: number) => {
       const ready = await ensureAudioReady();
       if (!ready) return;
 
-      setPlayingIndex(index);
+      // Set sticky highlight (persists after sound ends)
+      setStickyChordIndex(index);
       playVoicing(progression[index]);
-
-      // Clear playing state after duration
-      setTimeout(() => {
-        setPlayingIndex(null);
-      }, 1500);
     },
     [ensureAudioReady, progression]
   );
 
   /**
-   * Play the full progression
+   * Play the full progression - clears highlights when done
    */
   const handlePlayAll = useCallback(async () => {
     const ready = await ensureAudioReady();
     if (!ready) return;
+
+    // Clear any sticky highlight when starting progression
+    setStickyChordIndex(null);
 
     const tempoMs = 1500; // 1.5 seconds per chord
     setIsPlayingProgression(true);
@@ -188,7 +227,7 @@ export function VoicingDisplay() {
       setPlayingIndex(index);
     });
 
-    // Clear playing state after full duration
+    // Clear playing state after full duration (back to no highlights)
     const totalDuration = progression.length * tempoMs + 500;
     setTimeout(() => {
       setPlayingIndex(null);
@@ -209,26 +248,36 @@ export function VoicingDisplay() {
       <StyleSelector
         templates={ALL_TEMPLATES}
         selectedId={selectedTemplateId}
-        onSelect={setSelectedTemplateId}
+        onSelect={handleTemplateSelect}
       />
 
-      <div className="progression">
-        {progression.map((voicing, index) => (
-          <ChordCard
-            key={CHORD_NAMES[index]}
-            name={CHORD_NAMES[index]}
-            voicing={voicing}
-            isPlaying={playingIndex === index}
-            onPlay={() => handlePlayChord(index)}
-          />
-        ))}
-      </div>
+      {/* Piano Keyboard Visualization */}
+      <section className="keyboard-section">
+        <PianoKeyboard activeNotes={activeNotes} />
+        <KeyboardLegend />
+      </section>
 
       <PlayControls
         onPlayAll={handlePlayAll}
         isLoading={loading}
         isPlaying={isPlayingProgression}
       />
+
+      {/* Text display (kept from Phase 1/2) */}
+      <section className="text-display-section">
+        <h3 className="section-title">Note Details</h3>
+        <div className="progression">
+          {progression.map((voicing, index) => (
+            <ChordCard
+              key={CHORD_NAMES[index]}
+              name={CHORD_NAMES[index]}
+              voicing={voicing}
+              isHighlighted={highlightedIndex === index}
+              onPlay={() => handlePlayChord(index)}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
