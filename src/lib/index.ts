@@ -4,10 +4,11 @@
  * This module provides the foundational music theory calculations
  * for generating jazz piano voicings.
  *
- * Architecture:
- * - chordCalculator: Calculates chord tones (what notes make up a chord)
- * - voicingTemplates: Defines how to voice chords (which hand plays what)
- * - voicingGenerator: Combines the above to produce playable voicings (coming)
+ * Architecture (3-layer system):
+ * - chordCalculator: Layer 1 - Calculates chord tones (WHAT notes)
+ * - voicingTemplates: Layer 2 - Defines voicing patterns (WHICH hand plays what)
+ * - voicingGenerator: Layer 3 - Produces playable voicings (WHERE on piano)
+ * - audioEngine: Plays voicings using Tone.js piano samples
  */
 
 // Chord tone calculation
@@ -46,4 +47,15 @@ export {
   transposeNote,
   transposeVoicing,
 } from './voicingGenerator';
+
+// Audio engine (Tone.js)
+export {
+  initAudio,
+  isAudioReady,
+  isAudioLoading,
+  playVoicing,
+  playProgression,
+  stopAll,
+  disposeAudio,
+} from './audioEngine';
 

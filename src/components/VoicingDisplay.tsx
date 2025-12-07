@@ -1,20 +1,25 @@
 /**
  * VoicingDisplay Component
  *
- * Text-based display of jazz piano voicings for the ii-V-I progression.
+ * Display of jazz piano voicings for the ii-V-I progression.
  * Shows chord names, left hand notes, and right hand notes for each
- * voicing style.
+ * voicing style. Includes audio playback.
  *
- * Phase 1: Text output only (no audio, no piano visualization)
+ * Phase 2: Added audio playback with Tone.js
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './VoicingDisplay.css';
 import {
   ALL_TEMPLATES,
   PROGRESSIONS,
   VoicingTemplate,
   VoicedChord,
+  initAudio,
+  isAudioReady,
+  isAudioLoading,
+  playVoicing,
+  playProgression,
 } from '../lib';
 
 // ============================================
@@ -57,14 +62,16 @@ function StyleSelector({ templates, selectedId, onSelect }: StyleSelectorProps) 
 interface ChordCardProps {
   name: string;
   voicing: VoicedChord;
+  isPlaying: boolean;
+  onPlay: () => void;
 }
 
 /**
- * Display a single chord's voicing
+ * Display a single chord's voicing with play button
  */
-function ChordCard({ name, voicing }: ChordCardProps) {
+function ChordCard({ name, voicing, isPlaying, onPlay }: ChordCardProps) {
   return (
-    <div className="chord-card">
+    <div className={`chord-card ${isPlaying ? 'playing' : ''}`}>
       <h3 className="chord-name">{name}</h3>
       <div className="chord-notes">
         <div className="hand left-hand">
@@ -76,6 +83,32 @@ function ChordCard({ name, voicing }: ChordCardProps) {
           <span className="notes">{voicing.rightHand.join(', ')}</span>
         </div>
       </div>
+      <button className="play-chord-button" onClick={onPlay} aria-label={`Play ${name}`}>
+        ▶
+      </button>
+    </div>
+  );
+}
+
+interface PlayControlsProps {
+  onPlayAll: () => void;
+  isLoading: boolean;
+  isPlaying: boolean;
+}
+
+/**
+ * Play all button for the full progression
+ */
+function PlayControls({ onPlayAll, isLoading, isPlaying }: PlayControlsProps) {
+  return (
+    <div className="play-controls">
+      <button
+        className="play-all-button"
+        onClick={onPlayAll}
+        disabled={isLoading || isPlaying}
+      >
+        {isLoading ? 'Loading...' : isPlaying ? 'Playing...' : '▶ Play Progression'}
+      </button>
     </div>
   );
 }
@@ -86,16 +119,82 @@ function ChordCard({ name, voicing }: ChordCardProps) {
 
 /**
  * Main voicing display component.
- * Shows ii-V-I progression with selectable voicing styles.
+ * Shows ii-V-I progression with selectable voicing styles and audio playback.
  */
 export function VoicingDisplay() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(ALL_TEMPLATES[0].id);
+  const [audioReady, setAudioReady] = useState(isAudioReady());
+  const [loading, setLoading] = useState(false);
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const [isPlayingProgression, setIsPlayingProgression] = useState(false);
 
   // Get the progression for the selected template
   const progression = PROGRESSIONS[selectedTemplateId];
 
   // Get the selected template for display
   const selectedTemplate = ALL_TEMPLATES.find((t) => t.id === selectedTemplateId);
+
+  /**
+   * Initialize audio on first interaction
+   */
+  const ensureAudioReady = useCallback(async () => {
+    if (audioReady) return true;
+    if (loading) return false;
+
+    setLoading(true);
+    try {
+      await initAudio();
+      setAudioReady(true);
+      setLoading(false);
+      return true;
+    } catch (error) {
+      console.error('Failed to initialize audio:', error);
+      setLoading(false);
+      return false;
+    }
+  }, [audioReady, loading]);
+
+  /**
+   * Play a single chord
+   */
+  const handlePlayChord = useCallback(
+    async (index: number) => {
+      const ready = await ensureAudioReady();
+      if (!ready) return;
+
+      setPlayingIndex(index);
+      playVoicing(progression[index]);
+
+      // Clear playing state after duration
+      setTimeout(() => {
+        setPlayingIndex(null);
+      }, 1500);
+    },
+    [ensureAudioReady, progression]
+  );
+
+  /**
+   * Play the full progression
+   */
+  const handlePlayAll = useCallback(async () => {
+    const ready = await ensureAudioReady();
+    if (!ready) return;
+
+    const tempoMs = 1500; // 1.5 seconds per chord
+    setIsPlayingProgression(true);
+
+    // Play progression - callback handles highlighting each chord
+    playProgression(progression, tempoMs, (index) => {
+      setPlayingIndex(index);
+    });
+
+    // Clear playing state after full duration
+    const totalDuration = progression.length * tempoMs + 500;
+    setTimeout(() => {
+      setPlayingIndex(null);
+      setIsPlayingProgression(false);
+    }, totalDuration);
+  }, [ensureAudioReady, progression]);
 
   return (
     <div className="voicing-display">
@@ -119,9 +218,17 @@ export function VoicingDisplay() {
             key={CHORD_NAMES[index]}
             name={CHORD_NAMES[index]}
             voicing={voicing}
+            isPlaying={playingIndex === index}
+            onPlay={() => handlePlayChord(index)}
           />
         ))}
       </div>
+
+      <PlayControls
+        onPlayAll={handlePlayAll}
+        isLoading={loading}
+        isPlaying={isPlayingProgression}
+      />
     </div>
   );
 }
@@ -147,4 +254,3 @@ function getTemplateDescription(templateId: string): string {
 }
 
 export default VoicingDisplay;
-

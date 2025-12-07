@@ -6,7 +6,7 @@
 
 import React from 'react';
 import './App.css';
-import { VoicingDisplay } from './components';
+import { VoicingDisplay, ChordToneDisplay } from './components';
 
 function App() {
   return (
@@ -16,6 +16,7 @@ function App() {
         <p>Jazz piano voicing explorer</p>
       </header>
       <main>
+        <ChordToneDisplay />
         <VoicingDisplay />
       </main>
     </div>

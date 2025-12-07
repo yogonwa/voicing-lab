@@ -118,3 +118,75 @@
   color: #2b6cb0; /* Blue for treble notes */
 }
 
+/* Play button on chord card */
+.play-chord-button {
+  margin-top: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #4a5568;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.play-chord-button:hover {
+  background: #2d3748;
+  transform: scale(1.1);
+}
+
+.play-chord-button:active {
+  transform: scale(0.95);
+}
+
+/* Playing state */
+.chord-card.playing {
+  border-color: #48bb78;
+  background: #f0fff4;
+  box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.3);
+}
+
+.chord-card.playing .play-chord-button {
+  background: #48bb78;
+}
+
+/* Play Controls */
+.play-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.play-all-button {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.play-all-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.play-all-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.play-all-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

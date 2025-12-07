@@ -1,5 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+
+// Mock the audio engine to avoid Tone.js ESM issues in tests
+jest.mock('../lib/audioEngine');
+
 import { VoicingDisplay } from './VoicingDisplay';
 
 describe('VoicingDisplay', () => {
@@ -79,6 +83,20 @@ describe('VoicingDisplay', () => {
     expect(
       screen.getByText(/Root in left hand, 3rd and 7th in right hand/i)
     ).toBeInTheDocument();
+  });
+
+  it('renders play buttons for each chord', () => {
+    render(<VoicingDisplay />);
+
+    // 3 chord play buttons + 1 play all button = 4 buttons with play symbols
+    const playButtons = screen.getAllByRole('button', { name: /play/i });
+    expect(playButtons.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('renders play progression button', () => {
+    render(<VoicingDisplay />);
+
+    expect(screen.getByText(/Play Progression/i)).toBeInTheDocument();
   });
 });
 
