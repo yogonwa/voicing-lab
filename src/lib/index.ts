@@ -39,3 +39,11 @@ export {
   type VoicedChord,
 } from './voicingTemplates';
 
+// Voicing generator (combines chords + templates)
+export {
+  generateVoicing,
+  generateProgression,
+  transposeNote,
+  transposeVoicing,
+} from './voicingGenerator';
+
