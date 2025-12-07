@@ -7,3 +7,9 @@ test('renders app title', () => {
   const titleElement = screen.getByText(/Voicing Lab/i);
   expect(titleElement).toBeInTheDocument();
 });
+
+test('renders voicing display', () => {
+  render(<App />);
+  const progressionTitle = screen.getByText(/ii-V-I in C Major/i);
+  expect(progressionTitle).toBeInTheDocument();
+});
