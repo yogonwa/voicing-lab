@@ -12,7 +12,7 @@
  * - Single chord clicked: Highlight and KEEP until next action (sticky)
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import './VoicingDisplay.css';
 import {
   ALL_TEMPLATES,
@@ -234,6 +234,41 @@ export function VoicingDisplay() {
       setIsPlayingProgression(false);
     }, totalDuration);
   }, [ensureAudioReady, progression]);
+
+  /**
+   * Keyboard shortcuts:
+   * - Space: Play progression
+   * - 1, 2, 3: Switch between voicing templates
+   */
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) {
+        return;
+      }
+
+      switch (event.key) {
+        case ' ':
+          event.preventDefault();
+          if (!isPlayingProgression && !loading) {
+            handlePlayAll();
+          }
+          break;
+        case '1':
+          handleTemplateSelect(ALL_TEMPLATES[0].id);
+          break;
+        case '2':
+          handleTemplateSelect(ALL_TEMPLATES[1].id);
+          break;
+        case '3':
+          handleTemplateSelect(ALL_TEMPLATES[2].id);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlayingProgression, loading, handlePlayAll, handleTemplateSelect]);
 
   return (
     <div className="voicing-display">

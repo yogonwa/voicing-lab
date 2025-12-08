@@ -245,7 +245,7 @@ When arpeggio is enabled:
 - [x] Default state shows no highlights (clean)
 - [x] Single chord click = sticky highlight
 - [x] Progression clears highlights when done
-- [ ] Works on tablet/desktop widths (basic support)
+- [x] Works on tablet/desktop widths (basic support)
 
 ---
 

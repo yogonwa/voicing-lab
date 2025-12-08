@@ -12,8 +12,29 @@ test('renders app title', () => {
   expect(titleElement).toBeInTheDocument();
 });
 
+test('renders tagline', () => {
+  render(<App />);
+  const tagline = screen.getByText(/Learn professional jazz piano voicings/i);
+  expect(tagline).toBeInTheDocument();
+});
+
+test('renders intro text', () => {
+  render(<App />);
+  const intro = screen.getByText(/Move beyond blocky root-position chords/i);
+  expect(intro).toBeInTheDocument();
+});
+
 test('renders voicing display', () => {
   render(<App />);
   const progressionTitle = screen.getByText(/ii-V-I in C Major/i);
   expect(progressionTitle).toBeInTheDocument();
+});
+
+test('renders keyboard shortcuts in footer', () => {
+  render(<App />);
+  // Footer contains keyboard shortcuts hint
+  const footer = document.querySelector('.App-footer');
+  expect(footer).toBeInTheDocument();
+  expect(footer).toHaveTextContent('Space');
+  expect(footer).toHaveTextContent('Switch voicings');
 });
