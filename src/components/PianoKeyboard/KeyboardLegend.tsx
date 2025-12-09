@@ -1,19 +1,29 @@
 /**
  * KeyboardLegend Component
  *
- * Displays color legend for chord roles and hand differentiation.
+ * Displays color legend for chord roles (basic + extensions) and hand differentiation.
  */
 
 import React from 'react';
 import './KeyboardLegend.css';
 
 // ============================================
+// TYPES
+// ============================================
+
+interface KeyboardLegendProps {
+  /** Show extension colors in legend */
+  showExtensions?: boolean;
+}
+
+// ============================================
 // COMPONENT
 // ============================================
 
-export function KeyboardLegend() {
+export function KeyboardLegend({ showExtensions = false }: KeyboardLegendProps) {
   return (
     <div className="keyboard-legend">
+      {/* Basic chord tones */}
       <div className="keyboard-legend__roles">
         <span className="keyboard-legend__item keyboard-legend__item--root">
           <span className="keyboard-legend__color"></span>
@@ -32,6 +42,22 @@ export function KeyboardLegend() {
           7th
         </span>
       </div>
+
+      {/* Extension tones (shown when using extended voicings) */}
+      {showExtensions && (
+        <div className="keyboard-legend__roles keyboard-legend__extensions">
+          <span className="keyboard-legend__item keyboard-legend__item--ninth">
+            <span className="keyboard-legend__color"></span>
+            9th
+          </span>
+          <span className="keyboard-legend__item keyboard-legend__item--thirteenth">
+            <span className="keyboard-legend__color"></span>
+            13th
+          </span>
+        </div>
+      )}
+
+      {/* Hand differentiation */}
       <div className="keyboard-legend__hands">
         <span className="keyboard-legend__hand keyboard-legend__hand--left">
           ━━ Left Hand

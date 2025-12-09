@@ -12,8 +12,8 @@
  * programmatically.
  */
 
-import { Chord, ChordTones, getChordTones } from './chordCalculator';
-import { VoicingTemplate, VoicedChord, VoicingRole, Note, Octave } from './voicingTemplates';
+import { Chord, ExtendedChordTones, getExtendedChordTones } from './chordCalculator';
+import { VoicingTemplate, VoicedChord, VoicingRole, BasicRole, ExtensionRole, AlterationRole, Note, Octave } from './voicingTemplates';
 
 // ============================================
 // CONSTANTS
@@ -36,13 +36,39 @@ function createNote(noteName: string, octave: Octave): Note {
   return `${noteName}${octave}` as Note;
 }
 
+/** Basic chord tone roles */
+const BASIC_ROLES: BasicRole[] = ['root', 'third', 'fifth', 'seventh'];
+
+/** Extension roles */
+const EXTENSION_ROLES: ExtensionRole[] = ['ninth', 'eleventh', 'thirteenth'];
+
+/** Alteration roles */
+const ALTERATION_ROLES: AlterationRole[] = ['flatNinth', 'sharpNinth', 'sharpEleventh', 'flatThirteenth'];
+
 /**
  * Get the note name for a given chord role.
+ * Handles basic tones, extensions, and alterations.
  *
  * @example getRoleNote(chordTones, "third") → "F"
+ * @example getRoleNote(chordTones, "ninth") → "E"
  */
-function getRoleNote(tones: ChordTones, role: VoicingRole): string {
-  return tones[role];
+function getRoleNote(tones: ExtendedChordTones, role: VoicingRole): string {
+  // Basic chord tones
+  if (BASIC_ROLES.includes(role as BasicRole)) {
+    return tones[role as BasicRole];
+  }
+  
+  // Extensions
+  if (EXTENSION_ROLES.includes(role as ExtensionRole)) {
+    return tones.extensions[role as ExtensionRole];
+  }
+  
+  // Alterations (only available for dom7 chords)
+  if (ALTERATION_ROLES.includes(role as AlterationRole) && tones.alterations) {
+    return tones.alterations[role as AlterationRole];
+  }
+  
+  throw new Error(`Unknown voicing role: ${role}`);
 }
 
 /**
@@ -152,6 +178,8 @@ export function buildClosePosition(baseNote: Note, noteNames: string[]): Note[] 
  *
  * Takes the abstract chord (e.g., Dm7) and a voicing template,
  * returns concrete notes with octaves for each hand.
+ * 
+ * Now supports extensions (9th, 11th, 13th) and alterations for dom7 chords.
  *
  * Note: This produces a "default" voicing without voice leading optimization.
  * For smooth progressions, use the hardcoded PROGRESSIONS instead.
@@ -159,9 +187,13 @@ export function buildClosePosition(baseNote: Note, noteNames: string[]): Note[] 
  * @example
  * generateVoicing({ root: "D", quality: "min7" }, SHELL_POSITION_A)
  * // → { leftHand: ["D3"], rightHand: ["F4", "C5"] }
+ * 
+ * @example
+ * generateVoicing({ root: "D", quality: "min7" }, SHELL_WITH_NINTH)
+ * // → { leftHand: ["D3"], rightHand: ["F4", "C5", "E5"] }
  */
 export function generateVoicing(chord: Chord, template: VoicingTemplate): VoicedChord {
-  const tones = getChordTones(chord);
+  const tones = getExtendedChordTones(chord);
 
   // Build left hand notes
   const leftHand: Note[] = template.leftHand.map((role, index) => {

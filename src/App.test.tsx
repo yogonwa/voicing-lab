@@ -36,5 +36,6 @@ test('renders keyboard shortcuts in footer', () => {
   const footer = document.querySelector('.App-footer');
   expect(footer).toBeInTheDocument();
   expect(footer).toHaveTextContent('Space');
-  expect(footer).toHaveTextContent('Switch voicings');
+  expect(footer).toHaveTextContent('Basic voicings');
+  expect(footer).toHaveTextContent('Extended voicings');
 });

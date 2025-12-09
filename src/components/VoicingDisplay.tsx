@@ -15,6 +15,8 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import './VoicingDisplay.css';
 import {
+  BASIC_TEMPLATES,
+  EXTENDED_TEMPLATES,
   ALL_TEMPLATES,
   PROGRESSIONS,
   VoicingTemplate,
@@ -31,8 +33,20 @@ import { PianoKeyboard, KeyboardLegend, getActiveNotes, ActiveNote } from './Pia
 // CONSTANTS
 // ============================================
 
-// ii-V-I chord names in C major
-const CHORD_NAMES = ['Dm7', 'G7', 'Cmaj7'];
+// ii-V-I chord names in C major (basic)
+const CHORD_NAMES_BASIC = ['Dm7', 'G7', 'Cmaj7'];
+
+// ii-V-I chord names in C major (extended)
+const CHORD_NAMES_EXTENDED: Record<string, string[]> = {
+  'shell-9': ['Dm9', 'G9', 'Cmaj9'],
+  'shell-13': ['Dm9', 'G13', 'Cmaj9'],
+  'open-9': ['Dm9', 'G9', 'Cmaj9'],
+};
+
+/** Get chord names based on template (basic vs extended) */
+function getChordNames(templateId: string): string[] {
+  return CHORD_NAMES_EXTENDED[templateId] || CHORD_NAMES_BASIC;
+}
 
 // ii-V-I chords for role calculation
 const II_V_I_CHORDS: Chord[] = [
@@ -46,27 +60,53 @@ const II_V_I_CHORDS: Chord[] = [
 // ============================================
 
 interface StyleSelectorProps {
-  templates: VoicingTemplate[];
+  basicTemplates: VoicingTemplate[];
+  extendedTemplates: VoicingTemplate[];
   selectedId: string;
   onSelect: (id: string) => void;
 }
 
 /**
- * Buttons to switch between voicing styles
+ * Buttons to switch between voicing styles, grouped by basic/extended
  */
-function StyleSelector({ templates, selectedId, onSelect }: StyleSelectorProps) {
+function StyleSelector({ basicTemplates, extendedTemplates, selectedId, onSelect }: StyleSelectorProps) {
   return (
     <div className="style-selector">
-      {templates.map((template) => (
-        <button
-          key={template.id}
-          onClick={() => onSelect(template.id)}
-          className={`style-button ${selectedId === template.id ? 'active' : ''}`}
-          aria-pressed={selectedId === template.id}
-        >
-          {template.name}
-        </button>
-      ))}
+      {/* Basic voicings */}
+      <div className="style-selector__group">
+        <span className="style-selector__label">Basic</span>
+        <div className="style-selector__buttons">
+          {basicTemplates.map((template) => (
+            <button
+              key={template.id}
+              onClick={() => onSelect(template.id)}
+              className={`style-button ${selectedId === template.id ? 'active' : ''}`}
+              aria-pressed={selectedId === template.id}
+              title={template.description}
+            >
+              {template.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Extended voicings (with 9th, 13th) */}
+      <div className="style-selector__group">
+        <span className="style-selector__label">Extended</span>
+        <div className="style-selector__buttons">
+          {extendedTemplates.map((template) => (
+            <button
+              key={template.id}
+              onClick={() => onSelect(template.id)}
+              className={`style-button style-button--extended ${selectedId === template.id ? 'active' : ''}`}
+              aria-pressed={selectedId === template.id}
+              title={template.description}
+            >
+              {template.name}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -150,6 +190,12 @@ export function VoicingDisplay() {
 
   // Get the selected template for display
   const selectedTemplate = ALL_TEMPLATES.find((t) => t.id === selectedTemplateId);
+
+  // Check if current template uses extensions
+  const isExtendedTemplate = EXTENDED_TEMPLATES.some((t) => t.id === selectedTemplateId);
+
+  // Get appropriate chord names based on template
+  const chordNames = getChordNames(selectedTemplateId);
 
   // Determine which chord index to highlight (if any)
   // Priority: playingIndex (during progression) > stickyChordIndex (after single click)
@@ -238,7 +284,8 @@ export function VoicingDisplay() {
   /**
    * Keyboard shortcuts:
    * - Space: Play progression
-   * - 1, 2, 3: Switch between voicing templates
+   * - 1, 2, 3: Switch between basic voicing templates
+   * - 4, 5, 6: Switch between extended voicing templates
    */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -254,14 +301,25 @@ export function VoicingDisplay() {
             handlePlayAll();
           }
           break;
+        // Basic templates (1-3)
         case '1':
-          handleTemplateSelect(ALL_TEMPLATES[0].id);
+          handleTemplateSelect(BASIC_TEMPLATES[0]?.id);
           break;
         case '2':
-          handleTemplateSelect(ALL_TEMPLATES[1].id);
+          handleTemplateSelect(BASIC_TEMPLATES[1]?.id);
           break;
         case '3':
-          handleTemplateSelect(ALL_TEMPLATES[2].id);
+          handleTemplateSelect(BASIC_TEMPLATES[2]?.id);
+          break;
+        // Extended templates (4-6)
+        case '4':
+          handleTemplateSelect(EXTENDED_TEMPLATES[0]?.id);
+          break;
+        case '5':
+          handleTemplateSelect(EXTENDED_TEMPLATES[1]?.id);
+          break;
+        case '6':
+          handleTemplateSelect(EXTENDED_TEMPLATES[2]?.id);
           break;
       }
     };
@@ -281,7 +339,8 @@ export function VoicingDisplay() {
       </header>
 
       <StyleSelector
-        templates={ALL_TEMPLATES}
+        basicTemplates={BASIC_TEMPLATES}
+        extendedTemplates={EXTENDED_TEMPLATES}
         selectedId={selectedTemplateId}
         onSelect={handleTemplateSelect}
       />
@@ -289,7 +348,7 @@ export function VoicingDisplay() {
       {/* Piano Keyboard Visualization */}
       <section className="keyboard-section">
         <PianoKeyboard activeNotes={activeNotes} />
-        <KeyboardLegend />
+        <KeyboardLegend showExtensions={isExtendedTemplate} />
       </section>
 
       <PlayControls
@@ -304,8 +363,8 @@ export function VoicingDisplay() {
         <div className="progression">
           {progression.map((voicing, index) => (
             <ChordCard
-              key={CHORD_NAMES[index]}
-              name={CHORD_NAMES[index]}
+              key={chordNames[index]}
+              name={chordNames[index]}
               voicing={voicing}
               isHighlighted={highlightedIndex === index}
               onPlay={() => handlePlayChord(index)}
@@ -325,6 +384,13 @@ export function VoicingDisplay() {
  * Get a human-readable description of the voicing template
  */
 function getTemplateDescription(templateId: string): string {
+  // First check if template has its own description
+  const template = ALL_TEMPLATES.find(t => t.id === templateId);
+  if (template?.description) {
+    return template.description;
+  }
+
+  // Fallback for legacy
   switch (templateId) {
     case 'shell-a':
       return 'Root in left hand, 3rd and 7th in right hand (1-3-7)';

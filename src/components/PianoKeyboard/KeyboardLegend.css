@@ -38,7 +38,7 @@
   border-radius: 3px;
 }
 
-/* Role colors */
+/* Basic role colors */
 .keyboard-legend__item--root .keyboard-legend__color {
   background: #fc8181;
 }
@@ -53,6 +53,26 @@
 
 .keyboard-legend__item--seventh .keyboard-legend__color {
   background: #b794f4;
+}
+
+/* Extension role colors */
+.keyboard-legend__item--ninth .keyboard-legend__color {
+  background: #f6ad55;
+}
+
+.keyboard-legend__item--eleventh .keyboard-legend__color {
+  background: #4fd1c5;
+}
+
+.keyboard-legend__item--thirteenth .keyboard-legend__color {
+  background: #faf089;
+}
+
+/* Extensions row styling */
+.keyboard-legend__extensions {
+  padding-top: 4px;
+  border-top: 1px solid #4a5568;
+  margin-top: 4px;
 }
 
 /* Hands */

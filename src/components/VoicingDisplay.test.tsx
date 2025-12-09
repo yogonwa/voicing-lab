@@ -79,10 +79,30 @@ describe('VoicingDisplay', () => {
   it('displays template description', () => {
     render(<VoicingDisplay />);
 
-    // Shell A description
+    // Shell A description (updated format)
     expect(
-      screen.getByText(/Root in left hand, 3rd and 7th in right hand/i)
+      screen.getByText(/Root in LH, 3rd and 7th in RH/i)
     ).toBeInTheDocument();
+  });
+
+  it('renders extended voicing buttons', () => {
+    render(<VoicingDisplay />);
+    expect(screen.getByText('Shell + 9th')).toBeInTheDocument();
+    expect(screen.getByText('Shell + 13th')).toBeInTheDocument();
+    expect(screen.getByText('Open + 9th')).toBeInTheDocument();
+  });
+
+  it('switches to extended voicing and shows extended chord names', () => {
+    render(<VoicingDisplay />);
+
+    // Click Shell + 9th
+    const shell9Button = screen.getByText('Shell + 9th');
+    fireEvent.click(shell9Button);
+
+    // Should now show extended chord names
+    expect(screen.getByText('Dm9')).toBeInTheDocument();
+    expect(screen.getByText('G9')).toBeInTheDocument();
+    expect(screen.getByText('Cmaj9')).toBeInTheDocument();
   });
 
   it('renders play buttons for each chord', () => {

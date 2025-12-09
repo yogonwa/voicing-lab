@@ -25,7 +25,7 @@ function App() {
       </main>
       <footer className="App-footer">
         <p>
-          <kbd>Space</kbd> Play progression · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> Switch voicings
+          <kbd>Space</kbd> Play progression · <kbd>1-3</kbd> Basic voicings · <kbd>4-6</kbd> Extended voicings
         </p>
       </footer>
     </div>

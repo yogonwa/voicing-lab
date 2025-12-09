@@ -2,10 +2,18 @@ import {
   SHELL_POSITION_A,
   SHELL_POSITION_B,
   OPEN_VOICING,
+  SHELL_WITH_NINTH,
+  SHELL_WITH_THIRTEENTH,
+  OPEN_WITH_NINTH,
+  BASIC_TEMPLATES,
+  EXTENDED_TEMPLATES,
   ALL_TEMPLATES,
   SHELL_A_PROGRESSION,
   SHELL_B_PROGRESSION,
   OPEN_VOICING_PROGRESSION,
+  SHELL_9_PROGRESSION,
+  SHELL_13_PROGRESSION,
+  OPEN_9_PROGRESSION,
   PROGRESSIONS,
   VoicingTemplate,
   VoicedChord,
@@ -19,8 +27,16 @@ const isValidNote = (note: string): boolean => NOTE_REGEX.test(note);
 
 describe('voicingTemplates', () => {
   describe('template definitions', () => {
-    it('ALL_TEMPLATES contains exactly 3 templates', () => {
-      expect(ALL_TEMPLATES).toHaveLength(3);
+    it('BASIC_TEMPLATES contains 3 basic templates', () => {
+      expect(BASIC_TEMPLATES).toHaveLength(3);
+    });
+
+    it('EXTENDED_TEMPLATES contains 3 extended templates', () => {
+      expect(EXTENDED_TEMPLATES).toHaveLength(3);
+    });
+
+    it('ALL_TEMPLATES contains all 6 templates (basic + extended)', () => {
+      expect(ALL_TEMPLATES).toHaveLength(6);
     });
 
     it('each template has unique id', () => {
@@ -112,6 +128,32 @@ describe('voicingTemplates', () => {
         });
       });
     });
+
+    // Extended progressions (with 9th, 13th)
+    describe('SHELL_9_PROGRESSION', () => {
+      validateProgression(SHELL_9_PROGRESSION, 'SHELL_9_PROGRESSION');
+
+      it('each chord has 3 notes in right hand (3rd, 7th, 9th)', () => {
+        SHELL_9_PROGRESSION.forEach((chord) => {
+          expect(chord.rightHand).toHaveLength(3);
+        });
+      });
+    });
+
+    describe('SHELL_13_PROGRESSION', () => {
+      validateProgression(SHELL_13_PROGRESSION, 'SHELL_13_PROGRESSION');
+    });
+
+    describe('OPEN_9_PROGRESSION', () => {
+      validateProgression(OPEN_9_PROGRESSION, 'OPEN_9_PROGRESSION');
+
+      it('each chord has 2 notes in LH and 3 notes in RH', () => {
+        OPEN_9_PROGRESSION.forEach((chord) => {
+          expect(chord.leftHand).toHaveLength(2);
+          expect(chord.rightHand).toHaveLength(3);
+        });
+      });
+    });
   });
 
   describe('PROGRESSIONS map', () => {
@@ -119,6 +161,26 @@ describe('voicingTemplates', () => {
       ALL_TEMPLATES.forEach((template) => {
         expect(PROGRESSIONS[template.id]).toBeDefined();
         expect(PROGRESSIONS[template.id]).toHaveLength(3);
+      });
+    });
+  });
+
+  describe('extended templates', () => {
+    it('SHELL_WITH_NINTH includes ninth in right hand', () => {
+      expect(SHELL_WITH_NINTH.rightHand).toContain('ninth');
+    });
+
+    it('SHELL_WITH_THIRTEENTH includes thirteenth in right hand', () => {
+      expect(SHELL_WITH_THIRTEENTH.rightHand).toContain('thirteenth');
+    });
+
+    it('OPEN_WITH_NINTH includes ninth in right hand', () => {
+      expect(OPEN_WITH_NINTH.rightHand).toContain('ninth');
+    });
+
+    it('all extended templates have category shell-extended or open', () => {
+      EXTENDED_TEMPLATES.forEach((template) => {
+        expect(['shell-extended', 'open']).toContain(template.category);
       });
     });
   });

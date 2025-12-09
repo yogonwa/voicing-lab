@@ -3,9 +3,20 @@
  *
  * Functions for mapping notes to keyboard positions and
  * converting voicings to active note lists.
+ * 
+ * Updated for Phase 2.5: Supports extensions (9th, 11th, 13th)
  */
 
-import { Note, VoicedChord, VoicingRole, ChordTones, getChordTones, Chord } from '../../lib';
+import { 
+  Note, 
+  VoicedChord, 
+  VoicingRole, 
+  ChordTones, 
+  ExtendedChordTones,
+  getChordTones, 
+  getExtendedChordTones,
+  Chord 
+} from '../../lib';
 import { ActiveNote, KeyLayout, Hand } from './types';
 
 // ============================================
@@ -107,21 +118,40 @@ export function generateKeyboardLayout(
 
 /**
  * Determine the role of a note in a chord by matching against chord tones.
+ * Supports both basic tones and extensions.
  */
 function getNoteRole(
   noteName: string,
-  chordTones: ChordTones
+  chordTones: ExtendedChordTones
 ): VoicingRole | undefined {
+  // Basic chord tones
   if (noteName === chordTones.root) return 'root';
   if (noteName === chordTones.third) return 'third';
   if (noteName === chordTones.fifth) return 'fifth';
   if (noteName === chordTones.seventh) return 'seventh';
+  
+  // Extensions
+  if (chordTones.extensions) {
+    if (noteName === chordTones.extensions.ninth) return 'ninth';
+    if (noteName === chordTones.extensions.eleventh) return 'eleventh';
+    if (noteName === chordTones.extensions.thirteenth) return 'thirteenth';
+  }
+  
+  // Alterations (for dom7 chords)
+  if (chordTones.alterations) {
+    if (noteName === chordTones.alterations.flatNinth) return 'flatNinth';
+    if (noteName === chordTones.alterations.sharpNinth) return 'sharpNinth';
+    if (noteName === chordTones.alterations.sharpEleventh) return 'sharpEleventh';
+    if (noteName === chordTones.alterations.flatThirteenth) return 'flatThirteenth';
+  }
+  
   return undefined;
 }
 
 /**
  * Convert a VoicedChord to an array of ActiveNotes with roles.
  * Requires the original chord to determine roles.
+ * Supports both basic tones and extensions (9th, 11th, 13th).
  *
  * @param voicing - The voicing with specific notes
  * @param chord - The chord definition (for calculating roles)
@@ -130,7 +160,8 @@ export function getActiveNotes(
   voicing: VoicedChord,
   chord: Chord
 ): ActiveNote[] {
-  const chordTones = getChordTones(chord);
+  // Use extended chord tones to support 9th, 11th, 13th, and alterations
+  const chordTones = getExtendedChordTones(chord);
   const activeNotes: ActiveNote[] = [];
 
   // Process left hand notes
