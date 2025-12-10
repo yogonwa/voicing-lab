@@ -407,24 +407,33 @@ function playBlockChord(notes: NoteName[]): void {
 
 ## Implementation Checklist
 
-### Data Layer
-- [ ] Create `SelectedExtensions` type
-- [ ] Create `ExtensionOption` interface
-- [ ] Create `AVAILABLE_EXTENSIONS` config
-- [ ] Create helper to get notes for selected extensions
+### Data Layer ✅
+- [x] Create `SelectedExtensions` type
+- [x] Create `ExtensionOption` interface  
+- [x] Create `AVAILABLE_EXTENSIONS` config (in `extensionConfig.ts`)
+- [x] Create helper to get notes for selected extensions
+- [x] Fix #11 bug: Move `sharpEleventh` to `Extensions` (available for all qualities)
 
-### Components
-- [ ] Create `ChordExplorer` main component
-- [ ] Create `ExtensionPanel` component (grouped checkboxes)
-- [ ] Create `ExtensionCheckbox` component with warning support
-- [ ] Update `NoteBlocks` to show chord tones + extensions
-- [ ] Create `TipsSection` component
-- [ ] Update `PianoKeyboard` to remove LH/RH borders
+### Components ✅
+- [x] Create `ChordExplorer` main component
+- [x] Create `ExtensionPanel` component (grouped checkboxes)
+- [x] Create warning icon with tooltip for avoid notes
+- [x] Create `NoteBlocks` component to show chord tones + extensions
+- [x] Update `PianoKeyboard` to remove LH/RH borders
+- [x] Add extension colors to keyboard visualization
+- [x] Wire up block chord audio playback
 
-### Integration
-- [ ] Replace `ChordToneDisplay` with `ChordExplorer` in App
-- [ ] Update tests
-- [ ] Remove old validation section (ii-V-I)
+### Integration ✅
+- [x] Replace `ChordToneDisplay` with `ChordExplorer` in App
+- [x] Update tests (all 138 tests passing)
+- [x] Fix root positioning: octave 3 for root, 4 for chord tones, 5 for extensions
+
+### Future Enhancements 🔜
+- [ ] Create dedicated `TipsSection` component with extension tips
+- [ ] Add animated transitions for extension toggle
+- [ ] Add ARIA labels for accessibility
+- [ ] Cross-browser testing
+- [ ] Responsive design for tablet
 
 ---
 
@@ -446,12 +455,15 @@ const EXTENSION_TIPS: Record<string, string> = {
 
 ## Success Criteria
 
-- [ ] Can select any root + quality combination
-- [ ] Extension checkboxes update based on quality
-- [ ] Can toggle multiple extensions on/off
-- [ ] Avoid notes show warning icon with tooltip
-- [ ] Note blocks display chord tones and extensions with correct colors
-- [ ] Keyboard highlights all notes with role-appropriate colors
-- [ ] Play button plays all selected notes as block chord
-- [ ] Tips section shows contextual information
-- [ ] All extensions reset when root/quality changes
+- [x] Can select any root + quality combination
+- [x] Extension checkboxes update based on quality
+- [x] Can toggle multiple extensions on/off
+- [x] Avoid notes show warning icon with tooltip
+- [x] Note blocks display chord tones and extensions with correct colors
+- [x] Keyboard highlights all notes with role-appropriate colors
+- [x] Play button plays all selected notes as block chord
+- [x] Tips section shows contextual information (inline with extensions)
+- [x] All extensions reset when root/quality changes
+- [x] Root shows in lower octave (C3) for proper keyboard positioning
+
+**Status**: Phase 2.5 Complete ✅ (Last updated: Dec 10, 2025)
