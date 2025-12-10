@@ -3,7 +3,7 @@
  */
 
 export { VoicingDisplay } from './VoicingDisplay';
-export { ChordToneDisplay } from './ChordToneDisplay';
+export { ChordExplorer } from './ChordExplorer';
 export {
   PianoKeyboard,
   PianoKey,

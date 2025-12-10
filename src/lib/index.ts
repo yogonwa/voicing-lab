@@ -91,3 +91,17 @@ export {
   disposeAudio,
 } from './audioEngine';
 
+// Extension configuration (for Chord Explorer)
+export {
+  AVAILABLE_EXTENSIONS,
+  EXTENSION_LABELS,
+  EXTENSION_TIPS,
+  getExtensionsByGroup,
+  createEmptyExtensions,
+  getActiveExtensionKeys,
+  buildChordSymbol,
+  type ExtensionKey,
+  type SelectedExtensions,
+  type ExtensionOption,
+} from './extensionConfig';
+

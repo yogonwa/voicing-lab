@@ -44,6 +44,7 @@ export interface ChordTones {
 export interface Extensions {
   ninth: NoteName;
   eleventh: NoteName;
+  sharpEleventh: NoteName;  // #11 - Lydian sound, common on maj7 and dom7
   thirteenth: NoteName;
 }
 
@@ -149,6 +150,7 @@ export function getExtendedChordTones(chord: Chord): ExtendedChordTones {
   const extensions: Extensions = {
     ninth: calculateNote(root, EXTENSION_INTERVALS.ninth),
     eleventh: calculateNote(root, EXTENSION_INTERVALS.eleventh),
+    sharpEleventh: calculateNote(root, ALTERATION_INTERVALS.sharpEleventh), // #11 available for all
     thirteenth: calculateNote(root, EXTENSION_INTERVALS.thirteenth),
   };
 

@@ -10,11 +10,22 @@
    ============================================ */
 
 .piano-keyboard {
-  /* Role colors */
+  /* Chord tone colors */
   --color-root: #fc8181;
   --color-third: #63b3ed;
   --color-fifth: #68d391;
   --color-seventh: #b794f4;
+
+  /* Extension colors */
+  --color-ninth: #f6ad55;
+  --color-eleventh: #4fd1c5;
+  --color-thirteenth: #faf089;
+
+  /* Alteration colors */
+  --color-flat-ninth: #e53e3e;
+  --color-sharp-ninth: #ed64a6;
+  --color-sharp-eleventh: #9f7aea;
+  --color-flat-thirteenth: #f687b3;
 
   /* Hand border widths */
   --border-left-hand: 4px;
@@ -152,10 +163,22 @@
    ROLE-SPECIFIC COLORS
    ============================================ */
 
+/* Chord tones */
 .piano-key--root { --key-color: var(--color-root); }
 .piano-key--third { --key-color: var(--color-third); }
 .piano-key--fifth { --key-color: var(--color-fifth); }
 .piano-key--seventh { --key-color: var(--color-seventh); }
+
+/* Extensions */
+.piano-key--ninth { --key-color: var(--color-ninth); }
+.piano-key--eleventh { --key-color: var(--color-eleventh); }
+.piano-key--thirteenth { --key-color: var(--color-thirteenth); }
+
+/* Alterations */
+.piano-key--flatNinth { --key-color: var(--color-flat-ninth); }
+.piano-key--sharpNinth { --key-color: var(--color-sharp-ninth); }
+.piano-key--sharpEleventh { --key-color: var(--color-sharp-eleventh); }
+.piano-key--flatThirteenth { --key-color: var(--color-flat-thirteenth); }
 
 /* ============================================
    OCTAVE MARKERS

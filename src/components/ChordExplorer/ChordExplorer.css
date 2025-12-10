@@ -1,0 +1,380 @@
+/**
+ * ChordExplorer Styles
+ * 
+ * Interactive chord explorer with extension support.
+ */
+
+.chord-explorer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ============================================
+   CONTROLS SECTION
+   ============================================ */
+
+.explorer-controls {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin: 0 0 16px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+.chord-selectors {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.selector-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selector-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.selector-group select {
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.selector-group select:focus {
+  outline: none;
+  border-color: #4a5568;
+}
+
+/* ============================================
+   EXTENSION PANEL
+   ============================================ */
+
+.extension-panel {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.panel-title {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.extension-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.extension-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.group-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #718096;
+  min-width: 50px;
+}
+
+.group-checkboxes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Extension Checkbox */
+.extension-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.extension-checkbox:hover {
+  border-color: #cbd5e0;
+  background: #f7fafc;
+}
+
+.extension-checkbox.checked {
+  border-color: #4a5568;
+  background: #4a5568;
+  color: white;
+}
+
+.extension-checkbox.is-alteration {
+  border-style: dashed;
+}
+
+.extension-checkbox.is-alteration.checked {
+  background: #805ad5;
+  border-color: #805ad5;
+  border-style: solid;
+}
+
+.extension-checkbox.has-warning {
+  border-color: #f59e0b;
+}
+
+.extension-checkbox.has-warning.checked {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.extension-checkbox input {
+  display: none;
+}
+
+.checkbox-label {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+}
+
+.warning-icon {
+  font-size: 0.8rem;
+  margin-left: 2px;
+}
+
+/* ============================================
+   DISPLAY SECTION
+   ============================================ */
+
+.explorer-display {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 24px;
+  color: white;
+}
+
+.display-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chord-symbol {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.play-button {
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.play-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.play-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.play-button.playing {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+/* ============================================
+   NOTE BLOCKS
+   ============================================ */
+
+.note-blocks-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.note-blocks {
+  display: flex;
+  gap: 8px;
+}
+
+.note-blocks.extensions {
+  padding-left: 8px;
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.note-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 8px;
+  min-width: 48px;
+}
+
+.note-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.note-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+}
+
+/* Chord tone colors */
+.note-block--root {
+  background: #fc8181;
+  color: white;
+}
+
+.note-block--third {
+  background: #63b3ed;
+  color: white;
+}
+
+.note-block--fifth {
+  background: #68d391;
+  color: #1a1a2e;
+}
+
+.note-block--seventh {
+  background: #b794f4;
+  color: white;
+}
+
+/* Extension colors */
+.note-block--ninth {
+  background: #f6ad55;
+  color: #1a1a2e;
+}
+
+.note-block--flat-ninth {
+  background: #fc8181;
+  color: white;
+}
+
+.note-block--sharp-ninth {
+  background: #ed64a6;
+  color: white;
+}
+
+.note-block--eleventh {
+  background: #4fd1c5;
+  color: #1a1a2e;
+}
+
+.note-block--sharp-eleventh {
+  background: #9f7aea;
+  color: white;
+}
+
+.note-block--thirteenth {
+  background: #faf089;
+  color: #1a1a2e;
+}
+
+.note-block--flat-thirteenth {
+  background: #f687b3;
+  color: white;
+}
+
+/* ============================================
+   KEYBOARD CONTAINER
+   ============================================ */
+
+.keyboard-container {
+  background: #2d3748;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+/* ============================================
+   TIPS SECTION
+   ============================================ */
+
+.tips-section {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.tip {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  line-height: 1.5;
+}
+
+.tip:last-child {
+  margin-bottom: 0;
+}
+
+.tip strong {
+  color: #f6ad55;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 600px) {
+  .chord-selectors {
+    flex-direction: column;
+  }
+
+  .extension-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .chord-symbol {
+    font-size: 1.5rem;
+  }
+
+  .display-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+
