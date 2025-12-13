@@ -86,6 +86,7 @@ export {
   isAudioReady,
   isAudioLoading,
   playVoicing,
+  playArpeggio,
   playProgression,
   stopAll,
   disposeAudio,

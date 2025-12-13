@@ -147,6 +147,48 @@ export function playProgression(
 }
 
 /**
+ * Play notes as an arpeggio (one at a time, rolling upward)
+ *
+ * @param notes - Array of note names with octaves (e.g., ["C3", "E4", "G4"])
+ * @param noteDelayMs - Milliseconds between each note (default: 120)
+ * @param noteDuration - How long each note rings (default: quarter note)
+ * @param onNoteStart - Callback when each note starts (for keyboard sync)
+ * @returns Promise that resolves when arpeggio completes
+ */
+export function playArpeggio(
+  notes: string[],
+  noteDelayMs: number = 120,
+  noteDuration: string = '4n',
+  onNoteStart?: (noteIndex: number, note: string) => void
+): Promise<void> {
+  if (!sampler || !isInitialized) {
+    console.warn('Audio not initialized. Call initAudio() first.');
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    notes.forEach((note, index) => {
+      const delayMs = index * noteDelayMs;
+
+      setTimeout(() => {
+        // Trigger visual callback
+        if (onNoteStart) {
+          onNoteStart(index, note);
+        }
+        // Play the note
+        sampler!.triggerAttackRelease(note, noteDuration, Tone.now());
+
+        // Resolve when last note starts
+        if (index === notes.length - 1) {
+          // Wait for note duration before resolving
+          setTimeout(resolve, 800);
+        }
+      }, delayMs);
+    });
+  });
+}
+
+/**
  * Stop all currently playing sounds
  */
 export function stopAll(): void {

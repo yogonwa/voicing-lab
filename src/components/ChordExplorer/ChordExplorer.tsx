@@ -17,6 +17,7 @@ import {
   initAudio,
   isAudioReady,
   playVoicing,
+  playArpeggio,
   VoicedChord,
   SelectedExtensions,
   ExtensionKey,
@@ -169,6 +170,10 @@ export function ChordExplorer() {
   const [audioReady, setAudioReady] = useState(isAudioReady());
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Arpeggio mode
+  const [arpeggioMode, setArpeggioMode] = useState(false);
+  const [highlightedNoteIndex, setHighlightedNoteIndex] = useState<number | null>(null);
 
   // Calculate chord tones
   const chord: Chord = useMemo(() => ({
@@ -188,10 +193,19 @@ export function ChordExplorer() {
   );
 
   // Build active notes for keyboard
-  const activeNotes = useMemo(() => 
+  const allActiveNotes = useMemo(() => 
     getActiveNotesForKeyboard(extendedChordTones, selectedExtensions),
     [extendedChordTones, selectedExtensions]
   );
+
+  // During arpeggio playback, only highlight up to the current note
+  const activeNotes = useMemo(() => {
+    if (!isPlaying || !arpeggioMode || highlightedNoteIndex === null) {
+      return allActiveNotes;
+    }
+    // Show notes up to and including the current highlighted note
+    return allActiveNotes.slice(0, highlightedNoteIndex + 1);
+  }, [allActiveNotes, isPlaying, arpeggioMode, highlightedNoteIndex]);
 
   // Get active tips
   const activeTips = useMemo(() => {
@@ -249,21 +263,72 @@ export function ChordExplorer() {
   }, [audioReady, loading]);
 
   /**
-   * Play the chord
+   * Get ordered notes for playback (root first, then chord tones, then extensions)
+   */
+  const getOrderedNotes = useCallback((): string[] => {
+    const rootOctave = 3;
+    const chordOctave = 4;
+    const extOctave = 5;
+
+    const notes: string[] = [
+      `${extendedChordTones.root}${rootOctave}`,
+      `${extendedChordTones.third}${chordOctave}`,
+      `${extendedChordTones.fifth}${chordOctave}`,
+      `${extendedChordTones.seventh}${chordOctave}`,
+    ];
+
+    // Add selected extensions in order
+    if (selectedExtensions.ninth && extendedChordTones.extensions?.ninth) {
+      notes.push(`${extendedChordTones.extensions.ninth}${extOctave}`);
+    }
+    if (selectedExtensions.flatNinth && extendedChordTones.alterations?.flatNinth) {
+      notes.push(`${extendedChordTones.alterations.flatNinth}${extOctave}`);
+    }
+    if (selectedExtensions.sharpNinth && extendedChordTones.alterations?.sharpNinth) {
+      notes.push(`${extendedChordTones.alterations.sharpNinth}${extOctave}`);
+    }
+    if (selectedExtensions.eleventh && extendedChordTones.extensions?.eleventh) {
+      notes.push(`${extendedChordTones.extensions.eleventh}${extOctave}`);
+    }
+    if (selectedExtensions.sharpEleventh && extendedChordTones.extensions?.sharpEleventh) {
+      notes.push(`${extendedChordTones.extensions.sharpEleventh}${extOctave}`);
+    }
+    if (selectedExtensions.thirteenth && extendedChordTones.extensions?.thirteenth) {
+      notes.push(`${extendedChordTones.extensions.thirteenth}${extOctave}`);
+    }
+    if (selectedExtensions.flatThirteenth && extendedChordTones.alterations?.flatThirteenth) {
+      notes.push(`${extendedChordTones.alterations.flatThirteenth}${extOctave}`);
+    }
+
+    return notes;
+  }, [extendedChordTones, selectedExtensions]);
+
+  /**
+   * Play the chord (block or arpeggio based on mode)
    */
   const handlePlay = useCallback(async () => {
     const ready = await ensureAudioReady();
     if (!ready) return;
 
-    const voicing = buildBlockChordVoicing(extendedChordTones, selectedExtensions);
-    
     setIsPlaying(true);
-    playVoicing(voicing);
+    setHighlightedNoteIndex(null);
 
-    setTimeout(() => {
-      setIsPlaying(false);
-    }, 1500);
-  }, [ensureAudioReady, extendedChordTones, selectedExtensions]);
+    if (arpeggioMode) {
+      // Play as arpeggio with visual sync
+      const notes = getOrderedNotes();
+      await playArpeggio(notes, 150, '4n', (noteIndex) => {
+        setHighlightedNoteIndex(noteIndex);
+      });
+      setHighlightedNoteIndex(null);
+    } else {
+      // Play as block chord
+      const voicing = buildBlockChordVoicing(extendedChordTones, selectedExtensions);
+      playVoicing(voicing);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+
+    setIsPlaying(false);
+  }, [ensureAudioReady, arpeggioMode, getOrderedNotes, extendedChordTones, selectedExtensions]);
 
   return (
     <div className="chord-explorer">
@@ -311,14 +376,24 @@ export function ChordExplorer() {
       <section className="explorer-display">
         <header className="display-header">
           <h2 className="chord-symbol">{chordSymbol}</h2>
-          <button
-            className={`play-button ${isPlaying ? 'playing' : ''}`}
-            onClick={handlePlay}
-            disabled={loading || isPlaying}
-            aria-label={`Play ${chordSymbol}`}
-          >
-            {loading ? '...' : isPlaying ? '♪' : '▶ Play'}
-          </button>
+          <div className="playback-controls">
+            <button
+              className={`arpeggio-toggle ${arpeggioMode ? 'active' : ''}`}
+              onClick={() => setArpeggioMode(!arpeggioMode)}
+              aria-label={arpeggioMode ? 'Switch to block chord' : 'Switch to arpeggio'}
+              title={arpeggioMode ? 'Arpeggio mode (notes roll up)' : 'Block mode (all notes together)'}
+            >
+              {arpeggioMode ? '🎵 Roll' : '🎹 Block'}
+            </button>
+            <button
+              className={`play-button ${isPlaying ? 'playing' : ''}`}
+              onClick={handlePlay}
+              disabled={loading || isPlaying}
+              aria-label={`Play ${chordSymbol}`}
+            >
+              {loading ? '...' : isPlaying ? '♪' : '▶ Play'}
+            </button>
+          </div>
         </header>
 
         <NoteBlocks
