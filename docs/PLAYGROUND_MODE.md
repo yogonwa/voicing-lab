@@ -2,10 +2,60 @@
 
 ## Overview
 
-**Feature Name:** Chord Playground Mode  
-**Location:** ChordExplorer component (toggle between Template Mode and Playground Mode)  
-**Status:** Design Phase  
+**Feature Name:** Chord Playground Mode
+**Location:** ChordExplorer component (toggle between Template Mode and Playground Mode)
+**Status:** Track B helpers landed — Track C up next
 **Created:** December 2025
+
+---
+
+## Execution Blueprint (Structured & Composable)
+
+Use this as the implementation contract between the spec and code. Each track is intentionally small and composable so we can land work incrementally without blocking parallel tasks.
+
+### Track A: Mode Toggle & Routing
+- [x] Add a `mode` flag (`'template' | 'playground'`) in `ChordExplorer.tsx`.
+- [x] Persist mode in `localStorage` (key: `voicingLab/chordExplorerMode`) and hydrate on load.
+- [x] Render `ExtensionPanel` when `mode === 'template'`; render the new `PlaygroundPanel` otherwise.
+- [x] Share root/quality + chord-tone data between both modes to avoid duplication.
+
+### Track B: Playground State Builder
+- [x] Introduce a pure helper (e.g., `buildPlaygroundState(chordTones, selectedExtensions)`) that returns `PlaygroundBlock[]` in default order.
+- [x] Include derived `pitch` (e.g., `C4`) alongside `noteName` so downstream consumers (keyboard/audio) don’t need to recalc.
+- [x] Enforce a minimum of two enabled blocks in the state helper to keep UI logic simple.
+- [x] Add a selector util `enabledBlocks(blocks)` that filters and reindexes positions for octave mapping.
+
+### Track C: Drag/Toggle UI Shell
+- [x] Create `<PlaygroundPanel>` housing presets, draggable block row, and axis label.
+- [x] Add `<PlaygroundBlocks>` with drag + native drop targets to reorder horizontally.
+- [x] Define a `handleReorder` callback that receives reordered `PlaygroundBlock[]` (already reindexed) and updates state.
+- [x] Add `handleToggle(id)` that respects the minimum-enabled rule and provides a tooltip/string for violations.
+
+### Track D: Audio + Keyboard Integration
+- [ ] Replace the current `getActiveNotesForKeyboard`/`buildBlockChordVoicing` pipelines with playground-aware versions that consume `PlaygroundBlock[]`.
+- [ ] Map block `position` → octave via `getOctaveForPosition` (below) and emit an ordered array of `{ note: string; role: string }` for the keyboard.
+- [ ] Feed the ordered, enabled pitches into `playVoicing`/`playArpeggio` so arpeggio follows block order.
+- [ ] Keep Template Mode behavior unchanged by gating the new pipeline on `mode === 'playground'`.
+
+### Track E: Presets & Reset
+- [ ] Implement `applyPreset(presetKey, blocks)` that returns a new block array with reordered ids and updated `enabled` flags.
+- [ ] Support `Reset` by rehydrating from `buildPlaygroundState` using current chord tones + extensions.
+- [ ] Animate preset application with `@dnd-kit` or CSS transitions (optional once core logic is in).
+
+### Track F: Tips/Warnings (Opt-In Increment)
+- [ ] Add `getArrangementTips(blocks)` to return an array of strings for the Tips section.
+- [ ] Warn on edge cases (root on top, only root+5th, muddy 7th under root) but never block the action.
+- [ ] Keep the tips renderer separate so it can be dropped into either mode later.
+
+### Data Flow Contract
+1. `ChordExplorer` computes `ExtendedChordTones` (already exists).
+2. `buildPlaygroundState` → `PlaygroundBlock[]` (default order, derived pitches, enabled flags).
+3. UI mutations (`handleReorder`, `handleToggle`, `applyPreset`) produce a new `PlaygroundBlock[]`.
+4. `mapBlocksToKeyboard(blocks)` → ordered notes for `<PianoKeyboard />`.
+5. `mapBlocksToVoicing(blocks)` → `{ leftHand: string[]; rightHand: string[] }` for `playVoicing`/`playArpeggio`.
+6. Optional: `getArrangementTips(blocks)` → strings for `<TipsSection />`.
+
+This sequence keeps each layer pure and testable while letting us swap out the UI behavior without touching audio/keyboard internals.
 
 ---
 
