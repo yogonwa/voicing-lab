@@ -29,6 +29,7 @@ import {
 import { PianoKeyboard } from '../PianoKeyboard';
 import { ExtensionPanel } from './ExtensionPanel';
 import { NoteBlocks } from './NoteBlocks';
+import { PlaygroundPanel } from './PlaygroundPanel';
 
 // ============================================
 // TYPES
@@ -160,11 +161,14 @@ function buildBlockChordVoicing(
 // MAIN COMPONENT
 // ============================================
 
+type ExplorerMode = 'template' | 'playground';
+
 export function ChordExplorer() {
   // Chord selection state
   const [selectedRoot, setSelectedRoot] = useState<NoteName>('C');
   const [selectedQuality, setSelectedQuality] = useState<ChordQuality>('maj7');
   const [selectedExtensions, setSelectedExtensions] = useState<SelectedExtensions>(createEmptyExtensions());
+  const [mode, setMode] = useState<ExplorerMode>('template');
 
   // Audio state
   const [audioReady, setAudioReady] = useState(isAudioReady());
@@ -215,6 +219,13 @@ export function ChordExplorer() {
       tip: EXTENSION_TIPS[key],
     }));
   }, [selectedExtensions]);
+
+  /**
+   * Switch modes between Template and Playground
+   */
+  const handleModeChange = useCallback((nextMode: ExplorerMode) => {
+    setMode(nextMode);
+  }, []);
 
   /**
    * Handle root change - reset extensions
@@ -364,12 +375,41 @@ export function ChordExplorer() {
           </div>
         </div>
 
-        <ExtensionPanel
-          quality={selectedQuality}
-          root={selectedRoot}
-          selected={selectedExtensions}
-          onToggle={handleExtensionToggle}
-        />
+        <div className="mode-toggle">
+          <span className="mode-toggle__label">Mode</span>
+          <div className="mode-toggle__buttons" role="group" aria-label="Explorer mode toggle">
+            <button
+              type="button"
+              className={`mode-toggle__button ${mode === 'template' ? 'is-active' : ''}`}
+              onClick={() => handleModeChange('template')}
+            >
+              <span role="img" aria-hidden="true">📋</span> Template
+            </button>
+            <button
+              type="button"
+              className={`mode-toggle__button ${mode === 'playground' ? 'is-active' : ''}`}
+              onClick={() => handleModeChange('playground')}
+            >
+              <span role="img" aria-hidden="true">🧩</span> Playground
+            </button>
+          </div>
+        </div>
+
+        {mode === 'template' ? (
+          <ExtensionPanel
+            quality={selectedQuality}
+            root={selectedRoot}
+            selected={selectedExtensions}
+            onToggle={handleExtensionToggle}
+          />
+        ) : (
+          <div className="playground-callout">
+            <p>
+              Playground Mode unlocks drag-to-reorder voicings. The blocks below are wired up with the
+              current order while we build the interactive surface.
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Display Section */}
@@ -396,10 +436,17 @@ export function ChordExplorer() {
           </div>
         </header>
 
-        <NoteBlocks
-          chordTones={extendedChordTones}
-          selectedExtensions={selectedExtensions}
-        />
+        {mode === 'template' ? (
+          <NoteBlocks
+            chordTones={extendedChordTones}
+            selectedExtensions={selectedExtensions}
+          />
+        ) : (
+          <PlaygroundPanel
+            chordTones={extendedChordTones}
+            selectedExtensions={selectedExtensions}
+          />
+        )}
 
         <div className="keyboard-container">
           <PianoKeyboard
@@ -424,4 +471,3 @@ export function ChordExplorer() {
 }
 
 export default ChordExplorer;
-

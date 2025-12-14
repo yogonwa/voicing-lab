@@ -4,7 +4,7 @@
 
 **Feature Name:** Chord Playground Mode  
 **Location:** ChordExplorer component (toggle between Template Mode and Playground Mode)  
-**Status:** Design Phase  
+**Status:** Implementation Kickoff (mode toggle scaffold live)  
 **Created:** December 2025
 
 ---
@@ -427,9 +427,9 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 ### Phase 1: Mode Toggle + Static Reorder
 | Task | Description | Status |
 |------|-------------|--------|
-| 1.1 | Add mode toggle UI (Template ↔ Playground) | Pending |
-| 1.2 | Create PlaygroundPanel component shell | Pending |
-| 1.3 | Implement block rendering with current order | Pending |
+| 1.1 | Add mode toggle UI (Template ↔ Playground) | ✅ Complete |
+| 1.2 | Create PlaygroundPanel component shell | ✅ Complete |
+| 1.3 | Implement block rendering with current order | ✅ Complete |
 | 1.4 | Wire up keyboard/audio to respect block order | Pending |
 
 ### Phase 2: Drag-and-Drop
@@ -472,7 +472,7 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 ## Success Criteria
 
 ### Functional
-- [ ] Can switch between Template and Playground modes
+- [x] Can switch between Template and Playground modes
 - [ ] Blocks are draggable and reorder correctly
 - [ ] Blocks can be toggled on/off with click
 - [ ] Keyboard display updates in real-time
@@ -549,6 +549,5 @@ npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 ---
 
 **Document Version:** 1.0  
-**Last Updated:** December 2025  
+**Last Updated:** January 2026  
 **Author:** Voicing Lab Team
-
