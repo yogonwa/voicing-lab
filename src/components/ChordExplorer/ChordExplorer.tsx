@@ -5,7 +5,7 @@
  * Select root + quality, toggle extensions, see/hear the result.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import './ChordExplorer.css';
 import {
   NoteName,
@@ -29,6 +29,8 @@ import {
 import { PianoKeyboard } from '../PianoKeyboard';
 import { ExtensionPanel } from './ExtensionPanel';
 import { NoteBlocks } from './NoteBlocks';
+import { PlaygroundPanel } from './PlaygroundPanel';
+import { buildPlaygroundState, PlaygroundBlock } from './playgroundState';
 
 // ============================================
 // TYPES
@@ -40,9 +42,13 @@ interface ActiveNoteForKeyboard {
   hand: 'left' | 'right';
 }
 
+type ExplorerMode = 'template' | 'playground';
+
 // ============================================
 // CONSTANTS
 // ============================================
+
+const PLAYGROUND_MODE_STORAGE_KEY = 'voicingLab/chordExplorerMode';
 
 const QUALITIES: { value: ChordQuality; label: string }[] = [
   { value: 'maj7', label: 'Major 7' },
@@ -156,11 +162,25 @@ function buildBlockChordVoicing(
   };
 }
 
+function getInitialMode(): ExplorerMode {
+  if (typeof window === 'undefined') {
+    return 'template';
+  }
+
+  const storedMode = window.localStorage.getItem(PLAYGROUND_MODE_STORAGE_KEY) as ExplorerMode | null;
+
+  return storedMode === 'playground' || storedMode === 'template'
+    ? storedMode
+    : 'template';
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
 
 export function ChordExplorer() {
+  const [mode, setMode] = useState<ExplorerMode>(getInitialMode);
+
   // Chord selection state
   const [selectedRoot, setSelectedRoot] = useState<NoteName>('C');
   const [selectedQuality, setSelectedQuality] = useState<ChordQuality>('maj7');
@@ -187,13 +207,31 @@ export function ChordExplorer() {
   );
 
   // Build chord symbol
-  const chordSymbol = useMemo(() => 
+  const chordSymbol = useMemo(() =>
     buildChordSymbol(selectedRoot, selectedQuality, selectedExtensions),
     [selectedRoot, selectedQuality, selectedExtensions]
   );
 
+  const defaultPlaygroundBlocks = useMemo<PlaygroundBlock[]>(() =>
+    buildPlaygroundState(extendedChordTones, selectedExtensions),
+    [extendedChordTones, selectedExtensions]
+  );
+
+  const [playgroundBlocks, setPlaygroundBlocks] = useState<PlaygroundBlock[]>(defaultPlaygroundBlocks);
+  const [playgroundNotice, setPlaygroundNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPlaygroundBlocks(defaultPlaygroundBlocks);
+  }, [defaultPlaygroundBlocks]);
+
+  // Persist mode selection
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(PLAYGROUND_MODE_STORAGE_KEY, mode);
+  }, [mode]);
+
   // Build active notes for keyboard
-  const allActiveNotes = useMemo(() => 
+  const allActiveNotes = useMemo(() =>
     getActiveNotesForKeyboard(extendedChordTones, selectedExtensions),
     [extendedChordTones, selectedExtensions]
   );
@@ -232,6 +270,10 @@ export function ChordExplorer() {
     setSelectedExtensions(createEmptyExtensions());
   }, []);
 
+  const handleModeChange = useCallback((newMode: ExplorerMode) => {
+    setMode(newMode);
+  }, []);
+
   /**
    * Toggle extension
    */
@@ -240,6 +282,31 @@ export function ChordExplorer() {
       ...prev,
       [key]: !prev[key],
     }));
+  }, []);
+
+  const handlePlaygroundReorder = useCallback((nextBlocks: PlaygroundBlock[]) => {
+    setPlaygroundNotice(null);
+    setPlaygroundBlocks(nextBlocks.map((block, index) => ({ ...block, position: index })));
+  }, []);
+
+  const handlePlaygroundToggle = useCallback((id: PlaygroundBlock['id']) => {
+    setPlaygroundBlocks((prevBlocks) => {
+      const enabledCount = prevBlocks.filter((block) => block.enabled).length;
+
+      return prevBlocks.map((block) => {
+        if (block.id !== id) {
+          return block;
+        }
+
+        if (block.enabled && enabledCount <= 2) {
+          setPlaygroundNotice('Keep at least two notes enabled to hear a full voicing.');
+          return block;
+        }
+
+        setPlaygroundNotice(null);
+        return { ...block, enabled: !block.enabled };
+      });
+    });
   }, []);
 
   /**
@@ -330,6 +397,8 @@ export function ChordExplorer() {
     setIsPlaying(false);
   }, [ensureAudioReady, arpeggioMode, getOrderedNotes, extendedChordTones, selectedExtensions]);
 
+  const isTemplateMode = mode === 'template';
+
   return (
     <div className="chord-explorer">
       {/* Controls Section */}
@@ -364,12 +433,43 @@ export function ChordExplorer() {
           </div>
         </div>
 
-        <ExtensionPanel
-          quality={selectedQuality}
-          root={selectedRoot}
-          selected={selectedExtensions}
-          onToggle={handleExtensionToggle}
-        />
+        <div className="mode-toggle" role="group" aria-label="Select explorer mode">
+          <button
+            type="button"
+            className={`mode-toggle__button ${isTemplateMode ? 'is-active' : ''}`}
+            onClick={() => handleModeChange('template')}
+            aria-pressed={isTemplateMode}
+          >
+            📋 Template
+          </button>
+          <button
+            type="button"
+            className={`mode-toggle__button ${!isTemplateMode ? 'is-active' : ''}`}
+            onClick={() => handleModeChange('playground')}
+            aria-pressed={!isTemplateMode}
+          >
+            🧩 Playground
+          </button>
+        </div>
+
+        {isTemplateMode ? (
+          <ExtensionPanel
+            quality={selectedQuality}
+            root={selectedRoot}
+            selected={selectedExtensions}
+            onToggle={handleExtensionToggle}
+          />
+        ) : (
+          <PlaygroundPanel
+            chordSymbol={chordSymbol}
+            chordTones={extendedChordTones}
+            selectedExtensions={selectedExtensions}
+            blocks={playgroundBlocks}
+            onReorder={handlePlaygroundReorder}
+            onToggle={handlePlaygroundToggle}
+            notice={playgroundNotice}
+          />
+        )}
       </section>
 
       {/* Display Section */}
@@ -396,10 +496,20 @@ export function ChordExplorer() {
           </div>
         </header>
 
-        <NoteBlocks
-          chordTones={extendedChordTones}
-          selectedExtensions={selectedExtensions}
-        />
+        {isTemplateMode ? (
+          <NoteBlocks
+            chordTones={extendedChordTones}
+            selectedExtensions={selectedExtensions}
+          />
+        ) : (
+          <div className="playground-placeholder">
+            <h4 className="playground-placeholder__title">Playground surface ready</h4>
+            <p className="playground-placeholder__copy">
+              Drag and toggle the blocks above to set your custom voicing order. Keyboard + audio wiring remains on the
+              template pipeline for now and will swap to these blocks in Track D.
+            </p>
+          </div>
+        )}
 
         <div className="keyboard-container">
           <PianoKeyboard
