@@ -430,16 +430,16 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 | 1.1 | Add mode toggle UI (Template ↔ Playground) | ✅ Complete |
 | 1.2 | Create PlaygroundPanel component shell | ✅ Complete |
 | 1.3 | Implement block rendering with current order | ✅ Complete |
-| 1.4 | Wire up keyboard/audio to respect block order | Pending |
+| 1.4 | Wire up keyboard/audio to respect block order | ✅ Complete |
 
 ### Phase 2: Drag-and-Drop
 | Task | Description | Status |
 |------|-------------|--------|
-| 2.1 | Install @dnd-kit/core and @dnd-kit/sortable | Pending |
-| 2.2 | Implement SortableBlock component | Pending |
-| 2.3 | Add drag-end handler to reorder blocks | Pending |
-| 2.4 | Style drag states (lifted, drop target) | Pending |
-| 2.5 | Add keyboard navigation (arrow keys) | Pending |
+| 2.1 | Install @dnd-kit/core and @dnd-kit/sortable | ✅ Complete |
+| 2.2 | Implement SortableBlock component | ✅ Complete |
+| 2.3 | Add drag-end handler to reorder blocks | ✅ Complete |
+| 2.4 | Style drag states (lifted, drop target) | ✅ Complete |
+| 2.5 | Add keyboard navigation (arrow keys) | ✅ Complete |
 
 ### Phase 3: Toggle On/Off
 | Task | Description | Status |
@@ -466,6 +466,7 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 | 5.3 | Animate block transitions on preset load | Pending |
 | 5.4 | Mobile/touch optimization | Pending |
 | 5.5 | Accessibility audit (screen reader, keyboard) | Pending |
+| 5.6 | Fix keyboard note visualization + audio sync (idle + playback states) | Pending |
 
 ---
 
@@ -473,16 +474,16 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 
 ### Functional
 - [x] Can switch between Template and Playground modes
-- [ ] Blocks are draggable and reorder correctly
+- [x] Blocks are draggable and reorder correctly
 - [ ] Blocks can be toggled on/off with click
-- [ ] Keyboard display updates in real-time
-- [ ] Audio plays notes in current block order
-- [ ] Arpeggio respects block order
+- [x] Keyboard display updates in real-time
+- [x] Audio plays notes in current block order
+- [x] Arpeggio respects block order
 - [ ] Presets load correct arrangements
 - [ ] At least 2 blocks must remain enabled
 
 ### Educational
-- [ ] User can discover that order affects sound
+- [x] User can discover that order affects sound
 - [ ] User can hear effect of omitting notes (e.g., no 5th)
 - [ ] Tips explain what arrangements mean musically
 - [ ] Presets teach standard voicing patterns
@@ -490,7 +491,7 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 ### UX Quality
 - [ ] Drag animations feel smooth (60fps)
 - [ ] Toggle feedback is immediate
-- [ ] Accessible via keyboard navigation
+- [x] Accessible via keyboard navigation
 - [ ] Works on tablet/touch devices
 - [ ] Clear visual hierarchy (enabled vs disabled)
 

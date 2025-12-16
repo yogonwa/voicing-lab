@@ -303,13 +303,28 @@
   border-radius: 10px;
   padding: 12px;
   position: relative;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
   text-align: center;
+  cursor: grab;
+  border: none;
+}
+
+.playground-block:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
 }
 
 .playground-block.is-disabled {
   opacity: 0.5;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+.playground-block.is-dragging {
+  z-index: 2;
+  cursor: grabbing;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  transform: scale(1.05);
 }
 
 .playground-block__label {
@@ -339,6 +354,16 @@
   font-size: 0.85rem;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.85);
+}
+
+.playground-panel__axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .chord-symbol {

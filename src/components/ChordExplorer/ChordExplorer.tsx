@@ -5,7 +5,7 @@
  * Select root + quality, toggle extensions, see/hear the result.
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import './ChordExplorer.css';
 import {
   NoteName,
@@ -25,11 +25,20 @@ import {
   buildChordSymbol,
   getActiveExtensionKeys,
   EXTENSION_TIPS,
+  Note,
 } from '../../lib';
 import { PianoKeyboard } from '../PianoKeyboard';
 import { ExtensionPanel } from './ExtensionPanel';
 import { NoteBlocks } from './NoteBlocks';
 import { PlaygroundPanel } from './PlaygroundPanel';
+import {
+  PlaygroundBlock,
+  buildPlaygroundBlocks,
+  mergePlaygroundBlocks,
+  getEnabledBlocks,
+  getOctaveForPosition,
+  getMidiValue,
+} from './playgroundUtils';
 
 // ============================================
 // TYPES
@@ -157,6 +166,26 @@ function buildBlockChordVoicing(
   };
 }
 
+function getOctaveFromNoteString(note: string): number {
+  const match = note.match(/(\d+)$/);
+  return match ? parseInt(match[1], 10) : 4;
+}
+
+/**
+ * Convert a sequence of notes into a VoicedChord shape for playback.
+ * First note drives the left hand, remaining notes go to the right hand.
+ */
+function buildPlaygroundVoicing(notes: string[]): VoicedChord {
+  const typedNotes = notes as unknown as Note[];
+  const leftHand = typedNotes.slice(0, 1) as VoicedChord['leftHand'];
+  const rightHand = typedNotes.slice(1) as VoicedChord['rightHand'];
+
+  return {
+    leftHand,
+    rightHand,
+  };
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -169,6 +198,8 @@ export function ChordExplorer() {
   const [selectedQuality, setSelectedQuality] = useState<ChordQuality>('maj7');
   const [selectedExtensions, setSelectedExtensions] = useState<SelectedExtensions>(createEmptyExtensions());
   const [mode, setMode] = useState<ExplorerMode>('template');
+  const [playgroundBlocks, setPlaygroundBlocks] = useState<PlaygroundBlock[]>([]);
+  const [hasPlayed, setHasPlayed] = useState(false);
 
   // Audio state
   const [audioReady, setAudioReady] = useState(isAudioReady());
@@ -190,6 +221,20 @@ export function ChordExplorer() {
     [chord]
   );
 
+  const basePlaygroundBlocks = useMemo(
+    () => buildPlaygroundBlocks(extendedChordTones, selectedExtensions),
+    [extendedChordTones, selectedExtensions]
+  );
+
+  useEffect(() => {
+    setPlaygroundBlocks((prev) => mergePlaygroundBlocks(prev, basePlaygroundBlocks));
+  }, [basePlaygroundBlocks]);
+
+  const enabledPlaygroundBlocks = useMemo(
+    () => getEnabledBlocks(playgroundBlocks),
+    [playgroundBlocks]
+  );
+
   // Build chord symbol
   const chordSymbol = useMemo(() => 
     buildChordSymbol(selectedRoot, selectedQuality, selectedExtensions),
@@ -197,19 +242,56 @@ export function ChordExplorer() {
   );
 
   // Build active notes for keyboard
-  const allActiveNotes = useMemo(() => 
+  const templateActiveNotes = useMemo(() => 
     getActiveNotesForKeyboard(extendedChordTones, selectedExtensions),
     [extendedChordTones, selectedExtensions]
   );
 
-  // During arpeggio playback, only highlight up to the current note
+  const playgroundActiveNotes = useMemo(() => {
+    const total = enabledPlaygroundBlocks.length;
+    if (total === 0) return [];
+
+    let lastMidi = -Infinity;
+
+    return enabledPlaygroundBlocks.map((block, index) => {
+      let octave = getOctaveForPosition(index, total);
+      let midi = getMidiValue(block.note, octave);
+
+      while (midi <= lastMidi) {
+        octave += 1;
+        midi = getMidiValue(block.note, octave);
+      }
+
+      lastMidi = midi;
+
+      return {
+        note: `${block.note}${octave}`,
+        role: block.voicingRole,
+        hand: index === 0 ? 'left' : 'right',
+      };
+    }) as ActiveNoteForKeyboard[];
+  }, [enabledPlaygroundBlocks]);
+
+  const baseActiveNotes = useMemo(() => (
+    mode === 'playground' ? playgroundActiveNotes : templateActiveNotes
+  ), [mode, playgroundActiveNotes, templateActiveNotes]);
+
+  // Only show keys after playback has occurred; during playback, show the currently sounding notes
   const activeNotes = useMemo(() => {
-    if (!isPlaying || !arpeggioMode || highlightedNoteIndex === null) {
-      return allActiveNotes;
+    if (!isPlaying && !hasPlayed) {
+      return [];
     }
-    // Show notes up to and including the current highlighted note
-    return allActiveNotes.slice(0, highlightedNoteIndex + 1);
-  }, [allActiveNotes, isPlaying, arpeggioMode, highlightedNoteIndex]);
+
+    if (isPlaying && arpeggioMode && highlightedNoteIndex !== null) {
+      return baseActiveNotes.slice(0, highlightedNoteIndex + 1);
+    }
+
+    return baseActiveNotes;
+  }, [baseActiveNotes, isPlaying, hasPlayed, arpeggioMode, highlightedNoteIndex]);
+
+  useEffect(() => {
+    setHasPlayed(false);
+  }, [selectedRoot, selectedQuality, selectedExtensions, mode, playgroundBlocks]);
 
   // Get active tips
   const activeTips = useMemo(() => {
@@ -225,6 +307,9 @@ export function ChordExplorer() {
    */
   const handleModeChange = useCallback((nextMode: ExplorerMode) => {
     setMode(nextMode);
+  }, []);
+  const handlePlaygroundReorder = useCallback((nextBlocks: PlaygroundBlock[]) => {
+    setPlaygroundBlocks(nextBlocks);
   }, []);
 
   /**
@@ -277,6 +362,13 @@ export function ChordExplorer() {
    * Get ordered notes for playback (root first, then chord tones, then extensions)
    */
   const getOrderedNotes = useCallback((): string[] => {
+    if (mode === 'playground') {
+      const total = enabledPlaygroundBlocks.length;
+      return enabledPlaygroundBlocks.map((block, index) => 
+        `${block.note}${getOctaveForPosition(index, total)}`
+      );
+    }
+
     const rootOctave = 3;
     const chordOctave = 4;
     const extOctave = 5;
@@ -312,7 +404,7 @@ export function ChordExplorer() {
     }
 
     return notes;
-  }, [extendedChordTones, selectedExtensions]);
+  }, [mode, enabledPlaygroundBlocks, extendedChordTones, selectedExtensions]);
 
   /**
    * Play the chord (block or arpeggio based on mode)
@@ -322,24 +414,28 @@ export function ChordExplorer() {
     if (!ready) return;
 
     setIsPlaying(true);
+    setHasPlayed(true);
     setHighlightedNoteIndex(null);
+
+    const orderedNotes = getOrderedNotes();
 
     if (arpeggioMode) {
       // Play as arpeggio with visual sync
-      const notes = getOrderedNotes();
-      await playArpeggio(notes, 150, '4n', (noteIndex) => {
+      await playArpeggio(orderedNotes, 150, '4n', (noteIndex) => {
         setHighlightedNoteIndex(noteIndex);
       });
       setHighlightedNoteIndex(null);
     } else {
       // Play as block chord
-      const voicing = buildBlockChordVoicing(extendedChordTones, selectedExtensions);
+      const voicing = mode === 'playground'
+        ? buildPlaygroundVoicing(orderedNotes)
+        : buildBlockChordVoicing(extendedChordTones, selectedExtensions);
       playVoicing(voicing);
       await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     setIsPlaying(false);
-  }, [ensureAudioReady, arpeggioMode, getOrderedNotes, extendedChordTones, selectedExtensions]);
+  }, [ensureAudioReady, arpeggioMode, getOrderedNotes, extendedChordTones, selectedExtensions, mode]);
 
   return (
     <div className="chord-explorer">
@@ -405,8 +501,8 @@ export function ChordExplorer() {
         ) : (
           <div className="playground-callout">
             <p>
-              Playground Mode unlocks drag-to-reorder voicings. The blocks below are wired up with the
-              current order while we build the interactive surface.
+              Playground Mode lets you drag note blocks to experiment with voicing order. Reordering is
+              live for audio + keyboard, so play the chord or arpeggio to hear every variation instantly.
             </p>
           </div>
         )}
@@ -443,8 +539,8 @@ export function ChordExplorer() {
           />
         ) : (
           <PlaygroundPanel
-            chordTones={extendedChordTones}
-            selectedExtensions={selectedExtensions}
+            blocks={playgroundBlocks}
+            onReorder={handlePlaygroundReorder}
           />
         )}
 
@@ -452,7 +548,7 @@ export function ChordExplorer() {
           <PianoKeyboard
             activeNotes={activeNotes as any}
             startOctave={3}
-            endOctave={5}
+            endOctave={6}
           />
         </div>
 

@@ -1,112 +1,105 @@
 /**
  * PlaygroundPanel Component
  *
- * Initial scaffold for the drag-and-drop playground experience.
- * Currently renders static blocks that mirror the existing voicing order.
+ * Interactive drag-and-drop surface for Playground Mode.
+ * Blocks can be reordered horizontally to change voicing order.
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
-  ExtendedChordTones,
-  SelectedExtensions,
-  EXTENSION_LABELS,
-  ExtensionKey,
-} from '../../lib';
-
-// ============================================
-// TYPES
-// ============================================
-
-export interface PlaygroundBlock {
-  id: string;
-  label: string;
-  note: string;
-  role: string;
-  enabled: boolean;
-  isExtension: boolean;
-}
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { PlaygroundBlock } from './playgroundUtils';
 
 interface PlaygroundPanelProps {
-  chordTones: ExtendedChordTones;
-  selectedExtensions: SelectedExtensions;
+  blocks: PlaygroundBlock[];
+  onReorder: (next: PlaygroundBlock[]) => void;
 }
 
-const EXTENSION_ORDER: ExtensionKey[] = [
-  'ninth',
-  'flatNinth',
-  'sharpNinth',
-  'eleventh',
-  'sharpEleventh',
-  'thirteenth',
-  'flatThirteenth',
-];
+interface SortableBlockProps {
+  block: PlaygroundBlock;
+}
 
-// ============================================
-// COMPONENT
-// ============================================
+function SortableBlock({ block }: SortableBlockProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+  const { ['aria-pressed']: _omitPressed, ...restAttributes } = attributes;
 
-export function PlaygroundPanel({ chordTones, selectedExtensions }: PlaygroundPanelProps) {
-  const blocks = useMemo<PlaygroundBlock[]>(() => {
-    const chordToneBlocks: PlaygroundBlock[] = [
-      { id: 'root', label: 'R', note: chordTones.root, role: 'root', enabled: true, isExtension: false },
-      { id: 'third', label: '3', note: chordTones.third, role: 'third', enabled: true, isExtension: false },
-      { id: 'fifth', label: '5', note: chordTones.fifth, role: 'fifth', enabled: true, isExtension: false },
-      { id: 'seventh', label: '7', note: chordTones.seventh, role: 'seventh', enabled: true, isExtension: false },
-    ];
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
-    const extensionBlocks: PlaygroundBlock[] = [];
+  const classes = [
+    'playground-block',
+    `note-block--${block.cssRole}`,
+    block.enabled ? 'is-enabled' : 'is-disabled',
+    block.isExtension ? 'is-extension' : '',
+    isDragging ? 'is-dragging' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-    EXTENSION_ORDER.forEach((key) => {
-      let note: string | undefined;
-      let role: string = key;
+  return (
+    <button
+      type="button"
+      ref={setNodeRef}
+      className={classes}
+      style={style}
+      aria-pressed={block.enabled}
+      {...restAttributes}
+      {...listeners}
+    >
+      <span className="playground-block__label">{block.label}</span>
+      <span className="playground-block__note">{block.note}</span>
+      {!block.enabled && <span className="playground-block__state">off</span>}
+    </button>
+  );
+}
 
-      switch (key) {
-        case 'ninth':
-          note = chordTones.extensions?.ninth;
-          role = 'ninth';
-          break;
-        case 'flatNinth':
-          note = chordTones.alterations?.flatNinth;
-          role = 'flat-ninth';
-          break;
-        case 'sharpNinth':
-          note = chordTones.alterations?.sharpNinth;
-          role = 'sharp-ninth';
-          break;
-        case 'eleventh':
-          note = chordTones.extensions?.eleventh;
-          role = 'eleventh';
-          break;
-        case 'sharpEleventh':
-          note = chordTones.extensions?.sharpEleventh;
-          role = 'sharp-eleventh';
-          break;
-        case 'thirteenth':
-          note = chordTones.extensions?.thirteenth;
-          role = 'thirteenth';
-          break;
-        case 'flatThirteenth':
-          note = chordTones.alterations?.flatThirteenth;
-          role = 'flat-thirteenth';
-          break;
-        default:
-          break;
-      }
+export function PlaygroundPanel({ blocks, onReorder }: PlaygroundPanelProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-      if (note) {
-        extensionBlocks.push({
-          id: key,
-          label: EXTENSION_LABELS[key],
-          note,
-          role,
-          enabled: Boolean(selectedExtensions[key]),
-          isExtension: true,
-        });
-      }
-    });
+  const blockIds = useMemo(() => blocks.map((block) => block.id), [blocks]);
 
-    return [...chordToneBlocks, ...extensionBlocks];
-  }, [chordTones, selectedExtensions]);
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const oldIndex = blocks.findIndex((block) => block.id === active.id);
+      const newIndex = blocks.findIndex((block) => block.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      onReorder(arrayMove(blocks, oldIndex, newIndex));
+    },
+    [blocks, onReorder]
+  );
 
   return (
     <div className="playground-panel">
@@ -115,39 +108,38 @@ export function PlaygroundPanel({ chordTones, selectedExtensions }: PlaygroundPa
           <p className="playground-panel__eyebrow">Playground Mode</p>
           <h4 className="playground-panel__title">Drag to reorder • Click to toggle</h4>
         </div>
-        <span className="playground-panel__status-badge">Scaffold</span>
+        <span className="playground-panel__status-badge">Live</span>
       </div>
 
       <p className="playground-panel__description">
-        This scaffold mirrors the current template voicing order so we can wire up audio and keyboard
-        plumbing. Interactive drag-and-drop blocks land next.
+        Arrange blocks from left (lowest note) to right (highest note). Drag blocks with a mouse or touch,
+        or select a block and use the arrow keys. Disabled blocks stay in the list so you can compare
+        against the full template.
       </p>
 
-      <div className="playground-blocks">
-        {blocks.map((block) => {
-          const classes = [
-            'playground-block',
-            `note-block--${block.role}`,
-            block.enabled ? 'is-enabled' : 'is-disabled',
-            block.isExtension ? 'is-extension' : '',
-          ]
-            .filter(Boolean)
-            .join(' ');
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={blockIds} strategy={horizontalListSortingStrategy}>
+          <div className="playground-blocks" aria-live="polite">
+            {blocks.map((block) => (
+              <SortableBlock key={block.id} block={block} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
 
-          return (
-            <div key={block.id} className={classes}>
-              <span className="playground-block__label">{block.label}</span>
-              <span className="playground-block__note">{block.note}</span>
-              {!block.enabled && <span className="playground-block__state">off</span>}
-            </div>
-          );
-        })}
+      <div className="playground-panel__axis">
+        <span aria-hidden="true">◀ Lower</span>
+        <span aria-hidden="true">Higher ▶</span>
       </div>
 
       <div className="playground-panel__helper">
         <p>
-          Need a starting point? Presets and drag gestures will appear here soon. For now, blocks follow
-          the fixed R-3-5-7 order plus any enabled extensions.
+          Presets and click-to-toggle behavior land next. For now, use drag/reorder to explore different
+          voicing orders, then play the chord or arpeggio to hear the result reflected on the keyboard.
         </p>
       </div>
     </div>
