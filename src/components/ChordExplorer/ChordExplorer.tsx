@@ -62,6 +62,8 @@ const QUALITIES: { value: ChordQuality; label: string }[] = [
   { value: 'dim7', label: 'Dim 7' },
 ];
 
+const MIN_ENABLED_BLOCKS = 2;
+
 // ============================================
 // HELPERS
 // ============================================
@@ -199,6 +201,7 @@ export function ChordExplorer() {
   const [selectedExtensions, setSelectedExtensions] = useState<SelectedExtensions>(createEmptyExtensions());
   const [mode, setMode] = useState<ExplorerMode>('template');
   const [playgroundBlocks, setPlaygroundBlocks] = useState<PlaygroundBlock[]>([]);
+  const [playgroundWarning, setPlaygroundWarning] = useState<string | null>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
 
   // Audio state
@@ -310,6 +313,29 @@ export function ChordExplorer() {
   }, []);
   const handlePlaygroundReorder = useCallback((nextBlocks: PlaygroundBlock[]) => {
     setPlaygroundBlocks(nextBlocks);
+  }, []);
+  const handlePlaygroundToggle = useCallback((blockId: string) => {
+    setPlaygroundBlocks((prev) => {
+      const index = prev.findIndex((block) => block.id === blockId);
+      if (index === -1) return prev;
+
+      const enabledCount = prev.filter((block) => block.enabled).length;
+      const target = prev[index];
+
+      if (target.enabled && enabledCount <= MIN_ENABLED_BLOCKS) {
+        setPlaygroundWarning('At least 2 notes required');
+        return prev;
+      }
+
+      setPlaygroundWarning(null);
+
+      const next = [...prev];
+      next[index] = {
+        ...target,
+        enabled: !target.enabled,
+      };
+      return next;
+    });
   }, []);
 
   /**
@@ -541,6 +567,8 @@ export function ChordExplorer() {
           <PlaygroundPanel
             blocks={playgroundBlocks}
             onReorder={handlePlaygroundReorder}
+            onToggle={handlePlaygroundToggle}
+            warningMessage={playgroundWarning}
           />
         )}
 

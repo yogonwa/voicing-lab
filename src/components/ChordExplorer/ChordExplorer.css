@@ -356,6 +356,15 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
+.playground-panel__warning {
+  margin-top: 8px;
+  background: rgba(254, 215, 215, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #fed7d7;
+}
+
 .playground-panel__axis {
   display: flex;
   justify-content: space-between;

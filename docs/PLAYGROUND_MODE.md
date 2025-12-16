@@ -444,11 +444,18 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 ### Phase 3: Toggle On/Off
 | Task | Description | Status |
 |------|-------------|--------|
-| 3.1 | Add enabled/disabled state to blocks | Pending |
-| 3.2 | Implement click-to-toggle behavior | Pending |
-| 3.3 | Style disabled state (dimmed, inset shadow) | Pending |
-| 3.4 | Add minimum-2-blocks constraint | Pending |
-| 3.5 | Update keyboard/audio to skip disabled blocks | Pending |
+| 3.1 | Add enabled/disabled state to blocks | ✅ Complete |
+| 3.2 | Implement click-to-toggle behavior | ✅ Complete |
+| 3.3 | Style disabled state (dimmed, inset shadow) | ✅ Complete |
+| 3.4 | Add minimum-2-blocks constraint | ✅ Complete |
+| 3.5 | Update keyboard/audio to skip disabled blocks | ✅ Complete |
+feedback/edits TODO: 
+- initial playground keyboard load SHOULD show highlighted keys.
+- The extensions of 9,11,13 should have a single block to indicate normal,sharp,orflat notes. This can be a multi-click toggle control. Off>On>Flat>Sharp>Off. Interacting with this block will update the note in the keyboard and update the key name in the block itself eg: F>F# 
+- The first key in the keyboard display is shown in Depressed state. It should be neutral when no sound is playing. 
+- Block / Roll button should maintain a fixed width.
+
+
 
 ### Phase 4: Presets
 | Task | Description | Status |
@@ -475,12 +482,12 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 ### Functional
 - [x] Can switch between Template and Playground modes
 - [x] Blocks are draggable and reorder correctly
-- [ ] Blocks can be toggled on/off with click
+- [x] Blocks can be toggled on/off with click
 - [x] Keyboard display updates in real-time
 - [x] Audio plays notes in current block order
 - [x] Arpeggio respects block order
 - [ ] Presets load correct arrangements
-- [ ] At least 2 blocks must remain enabled
+- [x] At least 2 blocks must remain enabled
 
 ### Educational
 - [x] User can discover that order affects sound

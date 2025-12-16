@@ -28,13 +28,16 @@ import { PlaygroundBlock } from './playgroundUtils';
 interface PlaygroundPanelProps {
   blocks: PlaygroundBlock[];
   onReorder: (next: PlaygroundBlock[]) => void;
+  onToggle: (blockId: string) => void;
+  warningMessage?: string | null;
 }
 
 interface SortableBlockProps {
   block: PlaygroundBlock;
+  onToggle: (blockId: string) => void;
 }
 
-function SortableBlock({ block }: SortableBlockProps) {
+function SortableBlock({ block, onToggle }: SortableBlockProps) {
   const {
     attributes,
     listeners,
@@ -44,6 +47,12 @@ function SortableBlock({ block }: SortableBlockProps) {
     isDragging,
   } = useSortable({ id: block.id });
   const { ['aria-pressed']: _omitPressed, ...restAttributes } = attributes;
+
+  const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onToggle(block.id);
+  }, [block.id, onToggle]);
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -67,6 +76,7 @@ function SortableBlock({ block }: SortableBlockProps) {
       className={classes}
       style={style}
       aria-pressed={block.enabled}
+      onClick={handleClick}
       {...restAttributes}
       {...listeners}
     >
@@ -77,7 +87,7 @@ function SortableBlock({ block }: SortableBlockProps) {
   );
 }
 
-export function PlaygroundPanel({ blocks, onReorder }: PlaygroundPanelProps) {
+export function PlaygroundPanel({ blocks, onReorder, onToggle, warningMessage }: PlaygroundPanelProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
@@ -125,7 +135,7 @@ export function PlaygroundPanel({ blocks, onReorder }: PlaygroundPanelProps) {
         <SortableContext items={blockIds} strategy={horizontalListSortingStrategy}>
           <div className="playground-blocks" aria-live="polite">
             {blocks.map((block) => (
-              <SortableBlock key={block.id} block={block} />
+              <SortableBlock key={block.id} block={block} onToggle={onToggle} />
             ))}
           </div>
         </SortableContext>
@@ -138,10 +148,16 @@ export function PlaygroundPanel({ blocks, onReorder }: PlaygroundPanelProps) {
 
       <div className="playground-panel__helper">
         <p>
-          Presets and click-to-toggle behavior land next. For now, use drag/reorder to explore different
-          voicing orders, then play the chord or arpeggio to hear the result reflected on the keyboard.
+          Click any block to toggle that note on/off (at least two notes must remain). Drag to experiment with
+          new voicing orders, then play the chord or arpeggio to hear the result reflected on the keyboard.
         </p>
       </div>
+
+      {warningMessage && (
+        <div className="playground-panel__warning" role="status" aria-live="assertive">
+          {warningMessage}
+        </div>
+      )}
     </div>
   );
 }

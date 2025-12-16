@@ -153,15 +153,17 @@ export function mergePlaygroundBlocks(
   previous.forEach((block) => {
     const updated = nextById.get(block.id);
     if (updated) {
-      merged.push({ ...updated });
+      merged.push({
+        ...updated,
+        enabled: block.enabled,
+      });
+      nextById.delete(block.id);
     }
   });
 
   // Append any new blocks that were not in the previous order (e.g., new extensions)
-  next.forEach((block) => {
-    if (!merged.find((b) => b.id === block.id)) {
-      merged.push(block);
-    }
+  nextById.forEach((block) => {
+    merged.push(block);
   });
 
   return merged;
