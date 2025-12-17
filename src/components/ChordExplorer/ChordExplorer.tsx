@@ -26,6 +26,7 @@ import {
   getActiveExtensionKeys,
   EXTENSION_TIPS,
   Note,
+  VoicingRole,
 } from '../../lib';
 import { PianoKeyboard } from '../PianoKeyboard';
 import { ExtensionPanel } from './ExtensionPanel';
@@ -38,6 +39,8 @@ import {
   getEnabledBlocks,
   getOctaveForPosition,
   getMidiValue,
+  getNextVariantKey,
+  updateBlockVariant,
 } from './playgroundUtils';
 
 // ============================================
@@ -46,7 +49,7 @@ import {
 
 interface ActiveNoteForKeyboard {
   note: string;
-  role: string;
+  role: VoicingRole;
   hand: 'left' | 'right';
 }
 
@@ -63,6 +66,8 @@ const QUALITIES: { value: ChordQuality; label: string }[] = [
 ];
 
 const MIN_ENABLED_BLOCKS = 2;
+const TEMPLATE_ROOT_OCTAVE = 4;
+const TEMPLATE_EXTENSION_OCTAVE = 5;
 
 // ============================================
 // HELPERS
@@ -73,48 +78,92 @@ const MIN_ENABLED_BLOCKS = 2;
  * Root is in lower octave, other tones above.
  * No hand differentiation for chord explorer.
  */
+type TemplateNote = {
+  note: string;
+  role: VoicingRole;
+};
+
+const EXTENSION_RENDER_ORDER: ExtensionKey[] = [
+  'ninth',
+  'flatNinth',
+  'sharpNinth',
+  'eleventh',
+  'sharpEleventh',
+  'thirteenth',
+  'flatThirteenth',
+];
+
+function buildTemplateNoteSequence(
+  chordTones: ExtendedChordTones,
+  selectedExtensions: SelectedExtensions
+): TemplateNote[] {
+  const sequence: TemplateNote[] = [
+    { note: `${chordTones.root}${TEMPLATE_ROOT_OCTAVE}`, role: 'root' },
+    { note: `${chordTones.third}${TEMPLATE_ROOT_OCTAVE}`, role: 'third' },
+    { note: `${chordTones.fifth}${TEMPLATE_ROOT_OCTAVE}`, role: 'fifth' },
+    { note: `${chordTones.seventh}${TEMPLATE_ROOT_OCTAVE}`, role: 'seventh' },
+  ];
+
+  EXTENSION_RENDER_ORDER.forEach((key) => {
+    if (!selectedExtensions[key]) return;
+
+    let noteName: string | undefined;
+    let role: VoicingRole;
+
+    switch (key) {
+      case 'ninth':
+        noteName = chordTones.extensions?.ninth;
+        role = 'ninth';
+        break;
+      case 'flatNinth':
+        noteName = chordTones.alterations?.flatNinth;
+        role = 'flatNinth';
+        break;
+      case 'sharpNinth':
+        noteName = chordTones.alterations?.sharpNinth;
+        role = 'sharpNinth';
+        break;
+      case 'eleventh':
+        noteName = chordTones.extensions?.eleventh;
+        role = 'eleventh';
+        break;
+      case 'sharpEleventh':
+        noteName = chordTones.extensions?.sharpEleventh;
+        role = 'sharpEleventh';
+        break;
+      case 'thirteenth':
+        noteName = chordTones.extensions?.thirteenth;
+        role = 'thirteenth';
+        break;
+      case 'flatThirteenth':
+        noteName = chordTones.alterations?.flatThirteenth;
+        role = 'flatThirteenth';
+        break;
+      default:
+        role = 'ninth';
+    }
+
+    if (noteName) {
+      sequence.push({
+        note: `${noteName}${TEMPLATE_EXTENSION_OCTAVE}`,
+        role,
+      });
+    }
+  });
+
+  return sequence;
+}
+
 function getActiveNotesForKeyboard(
   chordTones: ExtendedChordTones,
   selectedExtensions: SelectedExtensions
 ): ActiveNoteForKeyboard[] {
-  const notes: ActiveNoteForKeyboard[] = [];
-  const rootOctave = 3;     // Root in lower octave
-  const chordOctave = 4;    // Other chord tones
-  const extOctave = 5;      // Extensions above
-
-  // Root in lower octave (leftmost on keyboard)
-  notes.push({ note: `${chordTones.root}${rootOctave}`, role: 'root', hand: 'right' });
-  
-  // Other chord tones
-  notes.push({ note: `${chordTones.third}${chordOctave}`, role: 'third', hand: 'right' });
-  notes.push({ note: `${chordTones.fifth}${chordOctave}`, role: 'fifth', hand: 'right' });
-  notes.push({ note: `${chordTones.seventh}${chordOctave}`, role: 'seventh', hand: 'right' });
-
-  // Extensions
-  if (selectedExtensions.ninth && chordTones.extensions?.ninth) {
-    notes.push({ note: `${chordTones.extensions.ninth}${extOctave}`, role: 'ninth', hand: 'right' });
-  }
-  if (selectedExtensions.flatNinth && chordTones.alterations?.flatNinth) {
-    notes.push({ note: `${chordTones.alterations.flatNinth}${extOctave}`, role: 'flatNinth', hand: 'right' });
-  }
-  if (selectedExtensions.sharpNinth && chordTones.alterations?.sharpNinth) {
-    notes.push({ note: `${chordTones.alterations.sharpNinth}${extOctave}`, role: 'sharpNinth', hand: 'right' });
-  }
-  if (selectedExtensions.eleventh && chordTones.extensions?.eleventh) {
-    notes.push({ note: `${chordTones.extensions.eleventh}${extOctave}`, role: 'eleventh', hand: 'right' });
-  }
-  // #11 is in extensions (available for all chord types)
-  if (selectedExtensions.sharpEleventh && chordTones.extensions?.sharpEleventh) {
-    notes.push({ note: `${chordTones.extensions.sharpEleventh}${extOctave}`, role: 'sharpEleventh', hand: 'right' });
-  }
-  if (selectedExtensions.thirteenth && chordTones.extensions?.thirteenth) {
-    notes.push({ note: `${chordTones.extensions.thirteenth}${extOctave}`, role: 'thirteenth', hand: 'right' });
-  }
-  if (selectedExtensions.flatThirteenth && chordTones.alterations?.flatThirteenth) {
-    notes.push({ note: `${chordTones.alterations.flatThirteenth}${extOctave}`, role: 'flatThirteenth', hand: 'right' });
-  }
-
-  return notes;
+  const sequence = buildTemplateNoteSequence(chordTones, selectedExtensions);
+  return sequence.map((entry, index) => ({
+    note: entry.note,
+    role: entry.role,
+    hand: index === 0 ? 'left' : 'right',
+  }));
 }
 
 /**
@@ -124,46 +173,12 @@ function buildBlockChordVoicing(
   chordTones: ExtendedChordTones,
   selectedExtensions: SelectedExtensions
 ): VoicedChord {
-  const rootOctave = 3;
-  const chordOctave = 4;
-  const extOctave = 5;
-
-  // Root in left hand (lower octave)
-  const leftHand = [`${chordTones.root}${rootOctave}`] as VoicedChord['leftHand'];
-  
-  // Right hand: chord tones + extensions
-  const rightHand: string[] = [
-    `${chordTones.third}${chordOctave}`,
-    `${chordTones.fifth}${chordOctave}`,
-    `${chordTones.seventh}${chordOctave}`,
-  ];
-
-  // Extensions
-  if (selectedExtensions.ninth && chordTones.extensions?.ninth) {
-    rightHand.push(`${chordTones.extensions.ninth}${extOctave}`);
-  }
-  if (selectedExtensions.flatNinth && chordTones.alterations?.flatNinth) {
-    rightHand.push(`${chordTones.alterations.flatNinth}${extOctave}`);
-  }
-  if (selectedExtensions.sharpNinth && chordTones.alterations?.sharpNinth) {
-    rightHand.push(`${chordTones.alterations.sharpNinth}${extOctave}`);
-  }
-  if (selectedExtensions.eleventh && chordTones.extensions?.eleventh) {
-    rightHand.push(`${chordTones.extensions.eleventh}${extOctave}`);
-  }
-  // #11 is in extensions (available for all chord types)
-  if (selectedExtensions.sharpEleventh && chordTones.extensions?.sharpEleventh) {
-    rightHand.push(`${chordTones.extensions.sharpEleventh}${extOctave}`);
-  }
-  if (selectedExtensions.thirteenth && chordTones.extensions?.thirteenth) {
-    rightHand.push(`${chordTones.extensions.thirteenth}${extOctave}`);
-  }
-  if (selectedExtensions.flatThirteenth && chordTones.alterations?.flatThirteenth) {
-    rightHand.push(`${chordTones.alterations.flatThirteenth}${extOctave}`);
-  }
+  const sequence = buildTemplateNoteSequence(chordTones, selectedExtensions);
+  const leftHand = sequence.slice(0, 1).map((entry) => entry.note as Note);
+  const rightHand = sequence.slice(1).map((entry) => entry.note as Note);
 
   return {
-    leftHand,
+    leftHand: leftHand as VoicedChord['leftHand'],
     rightHand: rightHand as VoicedChord['rightHand'],
   };
 }
@@ -202,7 +217,6 @@ export function ChordExplorer() {
   const [mode, setMode] = useState<ExplorerMode>('template');
   const [playgroundBlocks, setPlaygroundBlocks] = useState<PlaygroundBlock[]>([]);
   const [playgroundWarning, setPlaygroundWarning] = useState<string | null>(null);
-  const [hasPlayed, setHasPlayed] = useState(false);
 
   // Audio state
   const [audioReady, setAudioReady] = useState(isAudioReady());
@@ -281,20 +295,11 @@ export function ChordExplorer() {
 
   // Only show keys after playback has occurred; during playback, show the currently sounding notes
   const activeNotes = useMemo(() => {
-    if (!isPlaying && !hasPlayed) {
-      return [];
-    }
-
     if (isPlaying && arpeggioMode && highlightedNoteIndex !== null) {
       return baseActiveNotes.slice(0, highlightedNoteIndex + 1);
     }
-
     return baseActiveNotes;
-  }, [baseActiveNotes, isPlaying, hasPlayed, arpeggioMode, highlightedNoteIndex]);
-
-  useEffect(() => {
-    setHasPlayed(false);
-  }, [selectedRoot, selectedQuality, selectedExtensions, mode, playgroundBlocks]);
+  }, [baseActiveNotes, isPlaying, arpeggioMode, highlightedNoteIndex]);
 
   // Get active tips
   const activeTips = useMemo(() => {
@@ -319,17 +324,30 @@ export function ChordExplorer() {
       const index = prev.findIndex((block) => block.id === blockId);
       if (index === -1) return prev;
 
-      const enabledCount = prev.filter((block) => block.enabled).length;
       const target = prev[index];
+      const next = [...prev];
 
+      if (target.variants && target.variants.length > 0) {
+        const { nextKey, nextEnabled } = getNextVariantKey(target);
+        if (target.enabled && !nextEnabled) {
+          const enabledCount = prev.filter((block) => block.enabled).length;
+          if (enabledCount <= MIN_ENABLED_BLOCKS) {
+            setPlaygroundWarning('At least 2 notes required');
+            return prev;
+          }
+        }
+        setPlaygroundWarning(null);
+        next[index] = updateBlockVariant(target, nextKey, nextEnabled);
+        return next;
+      }
+
+      const enabledCount = prev.filter((block) => block.enabled).length;
       if (target.enabled && enabledCount <= MIN_ENABLED_BLOCKS) {
         setPlaygroundWarning('At least 2 notes required');
         return prev;
       }
 
       setPlaygroundWarning(null);
-
-      const next = [...prev];
       next[index] = {
         ...target,
         enabled: !target.enabled,
@@ -337,6 +355,36 @@ export function ChordExplorer() {
       return next;
     });
   }, []);
+
+  const chordSelectorInputs = (
+    <div className="chord-selectors">
+      <div className="selector-group">
+        <label htmlFor="root-select">Root</label>
+        <select
+          id="root-select"
+          value={selectedRoot}
+          onChange={(e) => handleRootChange(e.target.value as NoteName)}
+        >
+          {CHROMATIC_SCALE.map((note) => (
+            <option key={note} value={note}>{note}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="selector-group">
+        <label htmlFor="quality-select">Quality</label>
+        <select
+          id="quality-select"
+          value={selectedQuality}
+          onChange={(e) => handleQualityChange(e.target.value as ChordQuality)}
+        >
+          {QUALITIES.map(({ value, label }) => (
+            <option key={value} value={value}>{label}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
 
   /**
    * Handle root change - reset extensions
@@ -395,41 +443,7 @@ export function ChordExplorer() {
       );
     }
 
-    const rootOctave = 3;
-    const chordOctave = 4;
-    const extOctave = 5;
-
-    const notes: string[] = [
-      `${extendedChordTones.root}${rootOctave}`,
-      `${extendedChordTones.third}${chordOctave}`,
-      `${extendedChordTones.fifth}${chordOctave}`,
-      `${extendedChordTones.seventh}${chordOctave}`,
-    ];
-
-    // Add selected extensions in order
-    if (selectedExtensions.ninth && extendedChordTones.extensions?.ninth) {
-      notes.push(`${extendedChordTones.extensions.ninth}${extOctave}`);
-    }
-    if (selectedExtensions.flatNinth && extendedChordTones.alterations?.flatNinth) {
-      notes.push(`${extendedChordTones.alterations.flatNinth}${extOctave}`);
-    }
-    if (selectedExtensions.sharpNinth && extendedChordTones.alterations?.sharpNinth) {
-      notes.push(`${extendedChordTones.alterations.sharpNinth}${extOctave}`);
-    }
-    if (selectedExtensions.eleventh && extendedChordTones.extensions?.eleventh) {
-      notes.push(`${extendedChordTones.extensions.eleventh}${extOctave}`);
-    }
-    if (selectedExtensions.sharpEleventh && extendedChordTones.extensions?.sharpEleventh) {
-      notes.push(`${extendedChordTones.extensions.sharpEleventh}${extOctave}`);
-    }
-    if (selectedExtensions.thirteenth && extendedChordTones.extensions?.thirteenth) {
-      notes.push(`${extendedChordTones.extensions.thirteenth}${extOctave}`);
-    }
-    if (selectedExtensions.flatThirteenth && extendedChordTones.alterations?.flatThirteenth) {
-      notes.push(`${extendedChordTones.alterations.flatThirteenth}${extOctave}`);
-    }
-
-    return notes;
+    return buildTemplateNoteSequence(extendedChordTones, selectedExtensions).map((entry) => entry.note);
   }, [mode, enabledPlaygroundBlocks, extendedChordTones, selectedExtensions]);
 
   /**
@@ -440,7 +454,6 @@ export function ChordExplorer() {
     if (!ready) return;
 
     setIsPlaying(true);
-    setHasPlayed(true);
     setHighlightedNoteIndex(null);
 
     const orderedNotes = getOrderedNotes();
@@ -469,34 +482,6 @@ export function ChordExplorer() {
       <section className="explorer-controls">
         <h3 className="section-title">Chord Explorer</h3>
         
-        <div className="chord-selectors">
-          <div className="selector-group">
-            <label htmlFor="root-select">Root</label>
-            <select
-              id="root-select"
-              value={selectedRoot}
-              onChange={(e) => handleRootChange(e.target.value as NoteName)}
-            >
-              {CHROMATIC_SCALE.map((note) => (
-                <option key={note} value={note}>{note}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="selector-group">
-            <label htmlFor="quality-select">Quality</label>
-            <select
-              id="quality-select"
-              value={selectedQuality}
-              onChange={(e) => handleQualityChange(e.target.value as ChordQuality)}
-            >
-              {QUALITIES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
         <div className="mode-toggle">
           <span className="mode-toggle__label">Mode</span>
           <div className="mode-toggle__buttons" role="group" aria-label="Explorer mode toggle">
@@ -518,19 +503,30 @@ export function ChordExplorer() {
         </div>
 
         {mode === 'template' ? (
-          <ExtensionPanel
-            quality={selectedQuality}
-            root={selectedRoot}
-            selected={selectedExtensions}
-            onToggle={handleExtensionToggle}
-          />
-        ) : (
-          <div className="playground-callout">
-            <p>
-              Playground Mode lets you drag note blocks to experiment with voicing order. Reordering is
-              live for audio + keyboard, so play the chord or arpeggio to hear every variation instantly.
-            </p>
+          <div className="template-controls">
+            <div className="template-controls__selectors">
+              {chordSelectorInputs}
+            </div>
+            <ExtensionPanel
+              quality={selectedQuality}
+              root={selectedRoot}
+              selected={selectedExtensions}
+              onToggle={handleExtensionToggle}
+            />
           </div>
+        ) : (
+          <>
+            <div className="selector-card">
+              <h4 className="selector-card__title">Chord</h4>
+              {chordSelectorInputs}
+            </div>
+            <div className="playground-callout">
+              <p>
+                Playground Mode lets you drag note blocks to experiment with voicing order. Reordering is
+                live for audio + keyboard, so play the chord or arpeggio to hear every variation instantly.
+              </p>
+            </div>
+          </>
         )}
       </section>
 

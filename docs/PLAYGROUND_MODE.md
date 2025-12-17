@@ -450,10 +450,10 @@ Some arrangements may sound unusual or "wrong" to jazz ears. Rather than prevent
 | 3.4 | Add minimum-2-blocks constraint | ✅ Complete |
 | 3.5 | Update keyboard/audio to skip disabled blocks | ✅ Complete |
 feedback/edits TODO: 
-- initial playground keyboard load SHOULD show highlighted keys.
-- The extensions of 9,11,13 should have a single block to indicate normal,sharp,orflat notes. This can be a multi-click toggle control. Off>On>Flat>Sharp>Off. Interacting with this block will update the note in the keyboard and update the key name in the block itself eg: F>F# 
-- The first key in the keyboard display is shown in Depressed state. It should be neutral when no sound is playing. 
-- Block / Roll button should maintain a fixed width.
+- [x] Initial playground keyboard load should show highlighted keys.
+- [x] Extensions 9/11/13 share a single multi-click block (Off → natural → flat/sharp → Off) that updates the note label.
+- [x] First keyboard key remains neutral (not depressed) when idle.
+- [x] Block / Roll button maintains a fixed width.
 
 
 
@@ -473,7 +473,7 @@ feedback/edits TODO:
 | 5.3 | Animate block transitions on preset load | Pending |
 | 5.4 | Mobile/touch optimization | Pending |
 | 5.5 | Accessibility audit (screen reader, keyboard) | Pending |
-| 5.6 | Fix keyboard note visualization + audio sync (idle + playback states) | Pending |
+| 5.6 | Fix keyboard note visualization + audio sync (idle + playback states) | ✅ Complete |
 
 ---
 
@@ -559,3 +559,4 @@ npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 **Document Version:** 1.0  
 **Last Updated:** January 2026  
 **Author:** Voicing Lab Team
+

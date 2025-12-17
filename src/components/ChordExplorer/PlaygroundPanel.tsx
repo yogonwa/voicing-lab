@@ -148,8 +148,9 @@ export function PlaygroundPanel({ blocks, onReorder, onToggle, warningMessage }:
 
       <div className="playground-panel__helper">
         <p>
-          Click any block to toggle that note on/off (at least two notes must remain). Drag to experiment with
-          new voicing orders, then play the chord or arpeggio to hear the result reflected on the keyboard.
+          Click to cycle each block through available variants (Off → natural → flats/sharps). Keep at least two
+          notes active. Drag to experiment with new voicing orders, then play the chord or arpeggio to hear the
+          result reflected on the keyboard.
         </p>
       </div>
 

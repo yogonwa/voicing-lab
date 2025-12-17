@@ -61,6 +61,7 @@ export const EXTENSION_LABELS: Record<ExtensionKey, string> = {
 export const AVAILABLE_EXTENSIONS: Record<ChordQuality, ExtensionOption[]> = {
   maj7: [
     { key: "ninth", label: "9", group: "9ths", isAlteration: false },
+    { key: "eleventh", label: "11", group: "11ths", isAlteration: false },
     { key: "sharpEleventh", label: "♯11", group: "11ths", isAlteration: false },
     { key: "thirteenth", label: "13", group: "13ths", isAlteration: false },
   ],
@@ -68,6 +69,7 @@ export const AVAILABLE_EXTENSIONS: Record<ChordQuality, ExtensionOption[]> = {
     { key: "ninth", label: "9", group: "9ths", isAlteration: false },
     { key: "eleventh", label: "11", group: "11ths", isAlteration: false },
     { key: "thirteenth", label: "13", group: "13ths", isAlteration: false },
+    { key: "sharpEleventh", label: "♯11", group: "11ths", isAlteration: false },
   ],
   dom7: [
     { key: "ninth", label: "9", group: "9ths", isAlteration: false },
@@ -81,10 +83,13 @@ export const AVAILABLE_EXTENSIONS: Record<ChordQuality, ExtensionOption[]> = {
   min7b5: [
     { key: "ninth", label: "9", group: "9ths", isAlteration: false },
     { key: "eleventh", label: "11", group: "11ths", isAlteration: false },
+    { key: "sharpEleventh", label: "♯11", group: "11ths", isAlteration: false },
+    { key: "thirteenth", label: "13", group: "13ths", isAlteration: false },
   ],
   dim7: [
     { key: "ninth", label: "9", group: "9ths", isAlteration: false },
     { key: "eleventh", label: "11", group: "11ths", isAlteration: false },
+    { key: "thirteenth", label: "13", group: "13ths", isAlteration: false },
   ],
 };
 
@@ -199,4 +204,3 @@ export function buildChordSymbol(
 
   return `${root}${baseSymbol}${altString}`;
 }
-

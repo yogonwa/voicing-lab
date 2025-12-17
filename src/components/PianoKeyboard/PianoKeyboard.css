@@ -152,11 +152,11 @@
    ============================================ */
 
 .piano-key--left-hand.piano-key--active {
-  border: var(--border-left-hand) solid rgba(0, 0, 0, 0.6) !important;
+  border: 1px solid rgba(0, 0, 0, 0.35) !important;
 }
 
 .piano-key--right-hand.piano-key--active {
-  border: var(--border-right-hand) solid rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
 }
 
 /* ============================================

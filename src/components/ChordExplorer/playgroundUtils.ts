@@ -1,6 +1,5 @@
 import {
   CHROMATIC_SCALE,
-  EXTENSION_LABELS,
   ExtensionKey,
   ExtendedChordTones,
   NoteName,
@@ -13,6 +12,16 @@ import {
  * Blocks represent each chord tone/extension that can be reordered
  * inside Playground Mode.
  */
+export type ExtensionVariantKey = 'natural' | 'flat' | 'sharp';
+
+export interface PlaygroundVariant {
+  key: ExtensionVariantKey;
+  note: NoteName;
+  role: VoicingRole;
+  label: string;
+  extensionKey?: ExtensionKey;
+}
+
 export interface PlaygroundBlock {
   id: string;
   label: string;
@@ -21,18 +30,11 @@ export interface PlaygroundBlock {
   cssRole: string;
   enabled: boolean;
   isExtension: boolean;
+  variants?: PlaygroundVariant[];
+  variantKey?: ExtensionVariantKey;
 }
 
-/** Order for rendering extension blocks */
-export const EXTENSION_ORDER: ExtensionKey[] = [
-  'ninth',
-  'flatNinth',
-  'sharpNinth',
-  'eleventh',
-  'sharpEleventh',
-  'thirteenth',
-  'flatThirteenth',
-];
+type ExtensionDegree = 'ninth' | 'eleventh' | 'thirteenth';
 
 const ROLE_CLASS_MAP: Record<VoicingRole, string> = {
   root: 'root',
@@ -52,19 +54,24 @@ const NOTE_INDEX_MAP = new Map<NoteName, number>(
   CHROMATIC_SCALE.map((note, index) => [note, index])
 );
 
+const VARIANT_SEQUENCE: ExtensionVariantKey[] = ['natural', 'flat', 'sharp'];
+
 export function getMidiValue(note: NoteName, octave: number): number {
   const semitone = NOTE_INDEX_MAP.get(note) ?? 0;
   return octave * 12 + semitone;
 }
 
-function createBlock(
-  id: string,
-  label: string,
-  note: NoteName,
-  voicingRole: VoicingRole,
-  isExtension: boolean,
-  enabled = true
-): PlaygroundBlock {
+function createBlock(params: {
+  id: string;
+  label: string;
+  note: NoteName;
+  voicingRole: VoicingRole;
+  isExtension: boolean;
+  enabled?: boolean;
+  variants?: PlaygroundVariant[];
+  variantKey?: ExtensionVariantKey;
+}): PlaygroundBlock {
+  const { id, label, note, voicingRole, isExtension, enabled = true, variants, variantKey } = params;
   return {
     id,
     label,
@@ -73,31 +80,99 @@ function createBlock(
     cssRole: ROLE_CLASS_MAP[voicingRole] ?? 'root',
     enabled,
     isExtension,
+    variants,
+    variantKey,
   };
 }
 
-function getExtensionNote(
-  chordTones: ExtendedChordTones,
-  key: ExtensionKey
-): NoteName | undefined {
-  switch (key) {
-    case 'ninth':
-      return chordTones.extensions?.ninth;
-    case 'flatNinth':
-      return chordTones.alterations?.flatNinth;
-    case 'sharpNinth':
-      return chordTones.alterations?.sharpNinth;
-    case 'eleventh':
-      return chordTones.extensions?.eleventh;
-    case 'sharpEleventh':
-      return chordTones.extensions?.sharpEleventh;
-    case 'thirteenth':
-      return chordTones.extensions?.thirteenth;
-    case 'flatThirteenth':
-      return chordTones.alterations?.flatThirteenth;
-    default:
-      return undefined;
+const EXTENSION_VARIANTS: Record<ExtensionDegree, { key: ExtensionVariantKey; role: VoicingRole; label: string; extensionKey?: ExtensionKey; getNote: (tones: ExtendedChordTones) => NoteName | undefined; }[]> = {
+  ninth: [
+    {
+      key: 'natural',
+      role: 'ninth',
+      label: '9',
+      extensionKey: 'ninth',
+      getNote: (tones) => tones.extensions?.ninth,
+    },
+    {
+      key: 'flat',
+      role: 'flatNinth',
+      label: '♭9',
+      extensionKey: 'flatNinth',
+      getNote: (tones) => tones.alterations?.flatNinth,
+    },
+    {
+      key: 'sharp',
+      role: 'sharpNinth',
+      label: '♯9',
+      extensionKey: 'sharpNinth',
+      getNote: (tones) => tones.alterations?.sharpNinth,
+    },
+  ],
+  eleventh: [
+    {
+      key: 'natural',
+      role: 'eleventh',
+      label: '11',
+      extensionKey: 'eleventh',
+      getNote: (tones) => tones.extensions?.eleventh,
+    },
+    {
+      key: 'sharp',
+      role: 'sharpEleventh',
+      label: '♯11',
+      extensionKey: 'sharpEleventh',
+      getNote: (tones) => tones.extensions?.sharpEleventh,
+    },
+  ],
+  thirteenth: [
+    {
+      key: 'natural',
+      role: 'thirteenth',
+      label: '13',
+      extensionKey: 'thirteenth',
+      getNote: (tones) => tones.extensions?.thirteenth,
+    },
+    {
+      key: 'flat',
+      role: 'flatThirteenth',
+      label: '♭13',
+      extensionKey: 'flatThirteenth',
+      getNote: (tones) => tones.alterations?.flatThirteenth,
+    },
+  ],
+};
+
+const EXTENSION_BLOCKS: { degree: ExtensionDegree; label: string }[] = [
+  { degree: 'ninth', label: '9' },
+  { degree: 'eleventh', label: '11' },
+  { degree: 'thirteenth', label: '13' },
+];
+
+function findVariant(block: PlaygroundBlock, key?: ExtensionVariantKey): PlaygroundVariant | undefined {
+  if (!block.variants || block.variants.length === 0) return undefined;
+  if (key) {
+    return block.variants.find((variant) => variant.key === key) ?? block.variants[0];
   }
+  return block.variants[0];
+}
+
+function applyVariant(block: PlaygroundBlock, key?: ExtensionVariantKey): PlaygroundBlock {
+  if (!block.variants || block.variants.length === 0) {
+    return block;
+  }
+  const variant = findVariant(block, key);
+  if (!variant) {
+    return block;
+  }
+
+  return {
+    ...block,
+    note: variant.note,
+    voicingRole: variant.role,
+    cssRole: ROLE_CLASS_MAP[variant.role] ?? block.cssRole,
+    variantKey: variant.key,
+  };
 }
 
 /**
@@ -108,28 +183,50 @@ export function buildPlaygroundBlocks(
   selectedExtensions: SelectedExtensions
 ): PlaygroundBlock[] {
   const chordBlocks: PlaygroundBlock[] = [
-    createBlock('root', 'R', chordTones.root, 'root', false),
-    createBlock('third', '3', chordTones.third, 'third', false),
-    createBlock('fifth', '5', chordTones.fifth, 'fifth', false),
-    createBlock('seventh', '7', chordTones.seventh, 'seventh', false),
+    createBlock({ id: 'root', label: 'R', note: chordTones.root, voicingRole: 'root', isExtension: false }),
+    createBlock({ id: 'third', label: '3', note: chordTones.third, voicingRole: 'third', isExtension: false }),
+    createBlock({ id: 'fifth', label: '5', note: chordTones.fifth, voicingRole: 'fifth', isExtension: false }),
+    createBlock({ id: 'seventh', label: '7', note: chordTones.seventh, voicingRole: 'seventh', isExtension: false }),
   ];
 
   const extensionBlocks: PlaygroundBlock[] = [];
 
-  EXTENSION_ORDER.forEach((key) => {
-    const note = getExtensionNote(chordTones, key);
-    if (!note) return;
+  EXTENSION_BLOCKS.forEach(({ degree, label }) => {
+    const variantDefs = EXTENSION_VARIANTS[degree]
+      .map((variant) => {
+        const note = variant.getNote(chordTones);
+        if (!note) return undefined;
+        return {
+          key: variant.key,
+          note,
+          role: variant.role,
+          label: variant.label,
+          extensionKey: variant.extensionKey,
+        } as PlaygroundVariant;
+      })
+      .filter(Boolean) as PlaygroundVariant[];
 
-    extensionBlocks.push(
-      createBlock(
-        key,
-        EXTENSION_LABELS[key],
-        note,
-        key,
-        true,
-        Boolean(selectedExtensions[key])
-      )
+    if (variantDefs.length === 0) return;
+
+    const selectedVariant = variantDefs.find(
+      (variant) => variant.extensionKey && selectedExtensions[variant.extensionKey]
     );
+
+    const defaultVariant = variantDefs.find((variant) => variant.key === 'natural') ?? variantDefs[0];
+
+    let block = createBlock({
+      id: degree,
+      label,
+      note: defaultVariant.note,
+      voicingRole: defaultVariant.role,
+      isExtension: true,
+      enabled: Boolean(selectedVariant),
+      variants: variantDefs,
+      variantKey: (selectedVariant ?? defaultVariant).key,
+    });
+
+    block = applyVariant(block, block.variantKey);
+    extensionBlocks.push(block);
   });
 
   return [...chordBlocks, ...extensionBlocks];
@@ -153,10 +250,12 @@ export function mergePlaygroundBlocks(
   previous.forEach((block) => {
     const updated = nextById.get(block.id);
     if (updated) {
-      merged.push({
-        ...updated,
+      let mergedBlock = applyVariant(updated, block.variantKey);
+      mergedBlock = {
+        ...mergedBlock,
         enabled: block.enabled,
-      });
+      };
+      merged.push(mergedBlock);
       nextById.delete(block.id);
     }
   });
@@ -191,4 +290,50 @@ export function getOctaveForPosition(position: number, totalEnabled: number): nu
   const octaveOffset = Math.floor(ratio * OCTAVE_SPREAD);
 
   return BASE_OCTAVE + octaveOffset;
+}
+
+export function getNextVariantKey(
+  block: PlaygroundBlock
+): { nextKey?: ExtensionVariantKey; nextEnabled: boolean } {
+  if (!block.variants || block.variants.length === 0) {
+    return { nextEnabled: !block.enabled, nextKey: block.variantKey };
+  }
+
+  const available = VARIANT_SEQUENCE.filter((key) =>
+    block.variants!.some((variant) => variant.key === key)
+  );
+
+  if (!block.enabled) {
+    const targetKey = block.variantKey && available.includes(block.variantKey)
+      ? block.variantKey
+      : available[0];
+    return { nextEnabled: true, nextKey: targetKey };
+  }
+
+  const currentKey = block.variantKey && available.includes(block.variantKey)
+    ? block.variantKey
+    : available[0];
+  const currentIndex = available.indexOf(currentKey);
+  if (currentIndex === available.length - 1) {
+    return { nextEnabled: false, nextKey: currentKey };
+  }
+
+  return {
+    nextEnabled: true,
+    nextKey: available[currentIndex + 1],
+  };
+}
+
+export function updateBlockVariant(block: PlaygroundBlock, key?: ExtensionVariantKey, enabled?: boolean): PlaygroundBlock {
+  let nextBlock = block;
+  if (key) {
+    nextBlock = applyVariant(block, key);
+  }
+  if (typeof enabled === 'boolean') {
+    nextBlock = {
+      ...nextBlock,
+      enabled,
+    };
+  }
+  return nextBlock;
 }

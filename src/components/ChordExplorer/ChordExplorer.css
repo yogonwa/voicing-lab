@@ -32,7 +32,7 @@
 .chord-selectors {
   display: flex;
   gap: 16px;
-  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .mode-toggle {
@@ -98,6 +98,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 120px;
 }
 
 .selector-group label {
@@ -121,6 +122,50 @@
 .selector-group select:focus {
   outline: none;
   border-color: #4a5568;
+}
+
+.template-controls {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.template-controls__selectors {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.template-controls .extension-panel {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.template-controls .panel-title {
+  margin-top: 0;
+}
+
+.selector-card {
+  margin-top: 16px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.selector-card__title {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #4a5568;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* ============================================
@@ -420,6 +465,8 @@
   padding: 12px 24px;
   font-size: 1rem;
   font-weight: 600;
+  min-width: 110px;
+  text-align: center;
   border: none;
   border-radius: 8px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
