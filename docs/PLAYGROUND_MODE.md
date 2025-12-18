@@ -559,3 +559,4 @@ npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 **Document Version:** 1.0  
 **Last Updated:** January 2026  
 **Author:** Voicing Lab Team
+
