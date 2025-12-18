@@ -34,13 +34,14 @@ import { NoteBlocks } from './NoteBlocks';
 import { PlaygroundPanel } from './PlaygroundPanel';
 import {
   PlaygroundBlock,
+  VoicePresetHint,
   buildPlaygroundBlocks,
   mergePlaygroundBlocks,
   getEnabledBlocks,
-  getOctaveForPosition,
-  getMidiValue,
   getNextVariantKey,
   updateBlockVariant,
+  voicePlaygroundBlocks,
+  getRootWarning,
 } from './playgroundUtils';
 
 // ============================================
@@ -68,6 +69,64 @@ const QUALITIES: { value: ChordQuality; label: string }[] = [
 const MIN_ENABLED_BLOCKS = 2;
 const TEMPLATE_ROOT_OCTAVE = 4;
 const TEMPLATE_EXTENSION_OCTAVE = 5;
+
+interface PlaygroundPreset {
+  id: string;
+  name: string;
+  description: string;
+  order: string[];
+  disabled?: string[];
+  voiceHint?: VoicePresetHint;
+}
+
+const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
+  {
+    id: 'shell-a',
+    name: 'Shell A',
+    description: '1-3-7 guides',
+    order: ['root', 'third', 'seventh'],
+    disabled: ['fifth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: 'shell-b',
+    name: 'Shell B',
+    description: '1-7-3 inversion',
+    order: ['root', 'seventh', 'third'],
+    disabled: ['fifth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: 'open',
+    name: 'Open',
+    description: '1-5-3-7 spread',
+    order: ['root', 'fifth', 'third', 'seventh'],
+    voiceHint: 'spread',
+  },
+  {
+    id: 'rootless-a',
+    name: 'Rootless A',
+    description: '3-5-7-9',
+    order: ['third', 'fifth', 'seventh', 'ninth'],
+    disabled: ['root'],
+    voiceHint: 'compact',
+  },
+  {
+    id: 'rootless-b',
+    name: 'Rootless B',
+    description: '7-9-3-5',
+    order: ['seventh', 'ninth', 'third', 'fifth'],
+    disabled: ['root'],
+    voiceHint: 'compact',
+  },
+  {
+    id: 'drop-2',
+    name: 'Drop 2',
+    description: 'Drop-second voice',
+    order: ['root', 'fifth', 'third', 'seventh'],
+    voiceHint: 'spread',
+  },
+];
 
 // ============================================
 // HELPERS
@@ -217,6 +276,7 @@ export function ChordExplorer() {
   const [mode, setMode] = useState<ExplorerMode>('template');
   const [playgroundBlocks, setPlaygroundBlocks] = useState<PlaygroundBlock[]>([]);
   const [playgroundWarning, setPlaygroundWarning] = useState<string | null>(null);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
   // Audio state
   const [audioReady, setAudioReady] = useState(isAudioReady());
@@ -245,12 +305,19 @@ export function ChordExplorer() {
 
   useEffect(() => {
     setPlaygroundBlocks((prev) => mergePlaygroundBlocks(prev, basePlaygroundBlocks));
+    setActivePresetId(null);
+    setPlaygroundWarning(null);
   }, [basePlaygroundBlocks]);
 
   const enabledPlaygroundBlocks = useMemo(
     () => getEnabledBlocks(playgroundBlocks),
     [playgroundBlocks]
   );
+
+  const activePresetHint = useMemo<VoicePresetHint | undefined>(() => {
+    if (!activePresetId) return undefined;
+    return PLAYGROUND_PRESETS.find((preset) => preset.id === activePresetId)?.voiceHint;
+  }, [activePresetId]);
 
   // Build chord symbol
   const chordSymbol = useMemo(() => 
@@ -264,30 +331,23 @@ export function ChordExplorer() {
     [extendedChordTones, selectedExtensions]
   );
 
+  const voicedPlaygroundNotes = useMemo(
+    () => voicePlaygroundBlocks(playgroundBlocks, { presetHint: activePresetHint }),
+    [playgroundBlocks, activePresetHint]
+  );
+
   const playgroundActiveNotes = useMemo(() => {
-    const total = enabledPlaygroundBlocks.length;
-    if (total === 0) return [];
+    if (voicedPlaygroundNotes.length === 0) return [];
 
-    let lastMidi = -Infinity;
-
-    return enabledPlaygroundBlocks.map((block, index) => {
-      let octave = getOctaveForPosition(index, total);
-      let midi = getMidiValue(block.note, octave);
-
-      while (midi <= lastMidi) {
-        octave += 1;
-        midi = getMidiValue(block.note, octave);
-      }
-
-      lastMidi = midi;
-
+    return voicedPlaygroundNotes.map((note, index) => {
+      const block = enabledPlaygroundBlocks[index];
       return {
-        note: `${block.note}${octave}`,
-        role: block.voicingRole,
+        note,
+        role: block?.voicingRole ?? 'root',
         hand: index === 0 ? 'left' : 'right',
       };
     }) as ActiveNoteForKeyboard[];
-  }, [enabledPlaygroundBlocks]);
+  }, [enabledPlaygroundBlocks, voicedPlaygroundNotes]);
 
   const baseActiveNotes = useMemo(() => (
     mode === 'playground' ? playgroundActiveNotes : templateActiveNotes
@@ -310,6 +370,9 @@ export function ChordExplorer() {
     }));
   }, [selectedExtensions]);
 
+  const rootWarning = useMemo(() => getRootWarning(playgroundBlocks), [playgroundBlocks]);
+  const warningMessage = playgroundWarning ?? rootWarning;
+
   /**
    * Switch modes between Template and Playground
    */
@@ -317,9 +380,12 @@ export function ChordExplorer() {
     setMode(nextMode);
   }, []);
   const handlePlaygroundReorder = useCallback((nextBlocks: PlaygroundBlock[]) => {
+    setActivePresetId(null);
+    setPlaygroundWarning(null);
     setPlaygroundBlocks(nextBlocks);
   }, []);
   const handlePlaygroundToggle = useCallback((blockId: string) => {
+    setActivePresetId(null);
     setPlaygroundBlocks((prev) => {
       const index = prev.findIndex((block) => block.id === blockId);
       if (index === -1) return prev;
@@ -355,6 +421,45 @@ export function ChordExplorer() {
       return next;
     });
   }, []);
+
+  const handlePresetApply = useCallback((presetId: string) => {
+    const preset = PLAYGROUND_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+
+    setPlaygroundBlocks((prev) => {
+      const blockMap = new Map(prev.map((block) => [block.id, block]));
+      const ordered: PlaygroundBlock[] = [];
+
+      preset.order.forEach((id) => {
+        const block = blockMap.get(id);
+        if (block) {
+          ordered.push(block);
+          blockMap.delete(id);
+        }
+      });
+
+      blockMap.forEach((block) => ordered.push(block));
+
+      const disabledSet = new Set(preset.disabled ?? []);
+
+      return ordered.map((block) => {
+        const isOrdered = preset.order.includes(block.id);
+        const shouldDisable = disabledSet.has(block.id);
+        const nextEnabled = shouldDisable ? false : isOrdered ? true : block.enabled;
+        const targetVariant = isOrdered && block.variants ? 'natural' : block.variantKey;
+        return updateBlockVariant(block, targetVariant, nextEnabled);
+      });
+    });
+
+    setActivePresetId(presetId);
+    setPlaygroundWarning(null);
+  }, []);
+
+  const handlePresetReset = useCallback(() => {
+    setPlaygroundWarning(null);
+    setActivePresetId(null);
+    setPlaygroundBlocks(basePlaygroundBlocks);
+  }, [basePlaygroundBlocks]);
 
   const chordSelectorInputs = (
     <div className="chord-selectors">
@@ -437,14 +542,11 @@ export function ChordExplorer() {
    */
   const getOrderedNotes = useCallback((): string[] => {
     if (mode === 'playground') {
-      const total = enabledPlaygroundBlocks.length;
-      return enabledPlaygroundBlocks.map((block, index) => 
-        `${block.note}${getOctaveForPosition(index, total)}`
-      );
+      return [...voicedPlaygroundNotes];
     }
 
     return buildTemplateNoteSequence(extendedChordTones, selectedExtensions).map((entry) => entry.note);
-  }, [mode, enabledPlaygroundBlocks, extendedChordTones, selectedExtensions]);
+  }, [mode, voicedPlaygroundNotes, extendedChordTones, selectedExtensions]);
 
   /**
    * Play the chord (block or arpeggio based on mode)
@@ -564,7 +666,11 @@ export function ChordExplorer() {
             blocks={playgroundBlocks}
             onReorder={handlePlaygroundReorder}
             onToggle={handlePlaygroundToggle}
-            warningMessage={playgroundWarning}
+            warningMessage={warningMessage}
+            presets={PLAYGROUND_PRESETS}
+            activePresetId={activePresetId}
+            onPresetSelect={handlePresetApply}
+            onPresetReset={handlePresetReset}
           />
         )}
 

@@ -2,6 +2,7 @@ import {
   CHROMATIC_SCALE,
   ExtensionKey,
   ExtendedChordTones,
+  Note,
   NoteName,
   SelectedExtensions,
   VoicingRole,
@@ -50,16 +51,12 @@ const ROLE_CLASS_MAP: Record<VoicingRole, string> = {
   flatThirteenth: 'flat-thirteenth',
 };
 
-const NOTE_INDEX_MAP = new Map<NoteName, number>(
-  CHROMATIC_SCALE.map((note, index) => [note, index])
-);
-
 const VARIANT_SEQUENCE: ExtensionVariantKey[] = ['natural', 'flat', 'sharp'];
 
-export function getMidiValue(note: NoteName, octave: number): number {
-  const semitone = NOTE_INDEX_MAP.get(note) ?? 0;
-  return octave * 12 + semitone;
-}
+const MIN_OCTAVE = 3;
+const MAX_OCTAVE = 6;
+const MIN_PITCH = 48; // C3
+const MAX_PITCH = 95; // B6
 
 function createBlock(params: {
   id: string;
@@ -168,6 +165,7 @@ function applyVariant(block: PlaygroundBlock, key?: ExtensionVariantKey): Playgr
 
   return {
     ...block,
+    label: variant.label,
     note: variant.note,
     voicingRole: variant.role,
     cssRole: ROLE_CLASS_MAP[variant.role] ?? block.cssRole,
@@ -275,23 +273,6 @@ export function getEnabledBlocks(blocks: PlaygroundBlock[]): PlaygroundBlock[] {
   return blocks.filter((block) => block.enabled);
 }
 
-const BASE_OCTAVE = 3;
-const OCTAVE_SPREAD = 2; // Covers octaves 3-5 inclusive
-
-/**
- * Map block position to an octave so that left-most blocks produce the lowest pitch.
- */
-export function getOctaveForPosition(position: number, totalEnabled: number): number {
-  if (totalEnabled <= 1) {
-    return BASE_OCTAVE;
-  }
-
-  const ratio = position / (totalEnabled - 1);
-  const octaveOffset = Math.floor(ratio * OCTAVE_SPREAD);
-
-  return BASE_OCTAVE + octaveOffset;
-}
-
 export function getNextVariantKey(
   block: PlaygroundBlock
 ): { nextKey?: ExtensionVariantKey; nextEnabled: boolean } {
@@ -336,4 +317,223 @@ export function updateBlockVariant(block: PlaygroundBlock, key?: ExtensionVarian
     };
   }
   return nextBlock;
+}
+
+export type VoicePresetHint = 'compact' | 'spread';
+
+const NOTE_CHROMAS: Record<NoteName, number> = CHROMATIC_SCALE.reduce((acc, note, index) => {
+  acc[note] = index;
+  return acc;
+}, {} as Record<NoteName, number>);
+
+function getNoteChroma(note: NoteName): number {
+  return NOTE_CHROMAS[note] ?? 0;
+}
+
+function buildNote(note: NoteName, octave: number): Note {
+  return `${note}${octave}` as Note;
+}
+
+function parseNote(note: Note): { name: NoteName; octave: number } {
+  const match = note.match(/^([A-G]#?)(\d)$/);
+  if (!match) {
+    throw new Error(`Invalid note: ${note}`);
+  }
+  return { name: match[1] as NoteName, octave: parseInt(match[2], 10) };
+}
+
+function changeOctave(note: Note, delta: number): Note {
+  const { name, octave } = parseNote(note);
+  const nextOctave = Math.max(MIN_OCTAVE, Math.min(MAX_OCTAVE, octave + delta));
+  return buildNote(name, nextOctave);
+}
+
+function raiseOctave(note: Note, steps = 1): Note {
+  return changeOctave(note, steps);
+}
+
+function lowerOctave(note: Note, steps = 1): Note {
+  return changeOctave(note, -steps);
+}
+
+function getAbsolutePitch(note: Note): number {
+  const { name, octave } = parseNote(note);
+  return (octave + 1) * 12 + getNoteChroma(name);
+}
+
+function getBaseOctaveForCount(noteCount: number, hasRoot: boolean, hint?: VoicePresetHint): number {
+  if (hint === 'compact' && noteCount <= 4) return 4;
+  if (hint === 'spread') return 3;
+  if (noteCount >= 6) return 3;
+  return 4;
+}
+
+function getTargetSpread(noteCount: number): number {
+  if (noteCount <= 2) return 12;
+  if (noteCount === 3) return 12;
+  if (noteCount === 4) return 18;
+  if (noteCount === 5) return 24;
+  return 30;
+}
+
+function applyOctaveWrapping(blocks: PlaygroundBlock[], baseOctave: number): Note[] {
+  const result: Note[] = [];
+  let currentOctave = baseOctave;
+  let previousChroma: number | null = null;
+
+  blocks.forEach((block) => {
+    const chroma = getNoteChroma(block.note);
+    if (previousChroma !== null && chroma < previousChroma) {
+      currentOctave += 1;
+    }
+    const clampedOctave = Math.min(MAX_OCTAVE, currentOctave);
+    result.push(buildNote(block.note, clampedOctave));
+    previousChroma = chroma;
+  });
+
+  return result;
+}
+
+function enforceRootLowestPitch(blocks: PlaygroundBlock[], notes: Note[]): Note[] {
+  const rootIndex = blocks.findIndex((block) => block.voicingRole === 'root' && block.enabled);
+  if (rootIndex === -1) {
+    return notes;
+  }
+
+  const adjusted = [...notes];
+  let rootNote = adjusted[rootIndex];
+  let rootPitch = getAbsolutePitch(rootNote);
+  let lowestOther = Infinity;
+
+  adjusted.forEach((note, idx) => {
+    if (idx === rootIndex) return;
+    lowestOther = Math.min(lowestOther, getAbsolutePitch(note));
+  });
+
+  while (lowestOther < rootPitch && parseNote(rootNote).octave > MIN_OCTAVE) {
+    rootNote = lowerOctave(rootNote);
+    rootPitch = getAbsolutePitch(rootNote);
+  }
+
+  if (lowestOther < rootPitch) {
+    adjusted.forEach((note, idx) => {
+      if (idx === rootIndex) return;
+      let updated = note;
+      while (getAbsolutePitch(updated) <= rootPitch && parseNote(updated).octave < MAX_OCTAVE) {
+        updated = raiseOctave(updated);
+      }
+      adjusted[idx] = updated;
+    });
+  }
+
+  adjusted[rootIndex] = rootNote;
+  return adjusted;
+}
+
+function avoidMuddyBass(notes: Note[]): Note[] {
+  const adjusted = [...notes];
+  for (let i = 0; i < adjusted.length - 1; i++) {
+    const noteA = adjusted[i];
+    const noteB = adjusted[i + 1];
+    if (parseNote(noteA).octave < 4 && parseNote(noteB).octave < 4) {
+      const interval = getAbsolutePitch(noteB) - getAbsolutePitch(noteA);
+      if (interval > 0 && interval < 5) {
+        adjusted[i + 1] = raiseOctave(noteB);
+      }
+    }
+  }
+  return adjusted;
+}
+
+function clampTopRange(notes: Note[]): Note[] {
+  return notes.map((note) => {
+    let current = note;
+    while (getAbsolutePitch(current) > MAX_PITCH) {
+      current = lowerOctave(current);
+    }
+    return current;
+  });
+}
+
+function clampToPlayableRange(notes: Note[]): Note[] {
+  return notes.map((note) => {
+    let current = note;
+    while (getAbsolutePitch(current) < MIN_PITCH) {
+      current = raiseOctave(current);
+    }
+    return current;
+  });
+}
+
+function ensureMinimumSpread(notes: Note[], noteCount: number): Note[] {
+  if (noteCount <= 2 || notes.length < 2) {
+    return notes;
+  }
+
+  const adjusted = [...notes];
+  const targetSpread = getTargetSpread(noteCount);
+  let lowest = getAbsolutePitch(adjusted[0]);
+  let highest = getAbsolutePitch(adjusted[adjusted.length - 1]);
+
+  while (highest - lowest < targetSpread && parseNote(adjusted[adjusted.length - 1]).octave < MAX_OCTAVE) {
+    adjusted[adjusted.length - 1] = raiseOctave(adjusted[adjusted.length - 1]);
+    highest = getAbsolutePitch(adjusted[adjusted.length - 1]);
+  }
+
+  return adjusted;
+}
+
+function clampMaximumSpread(notes: Note[]): Note[] {
+  if (notes.length < 2) return notes;
+  const adjusted = [...notes];
+  let lowest = getAbsolutePitch(adjusted[0]);
+  let highest = getAbsolutePitch(adjusted[adjusted.length - 1]);
+
+  while (highest - lowest > 30 && parseNote(adjusted[adjusted.length - 1]).octave > MIN_OCTAVE) {
+    adjusted[adjusted.length - 1] = lowerOctave(adjusted[adjusted.length - 1]);
+    highest = getAbsolutePitch(adjusted[adjusted.length - 1]);
+  }
+
+  return adjusted;
+}
+
+function applyGlobalConstraints(notes: Note[], noteCount: number): Note[] {
+  let adjusted = [...notes];
+  adjusted = avoidMuddyBass(adjusted);
+  adjusted = clampTopRange(adjusted);
+  adjusted = ensureMinimumSpread(adjusted, noteCount);
+  adjusted = clampMaximumSpread(adjusted);
+  adjusted = clampToPlayableRange(adjusted);
+  return adjusted;
+}
+
+export function voicePlaygroundBlocks(
+  blocks: PlaygroundBlock[],
+  options?: { presetHint?: VoicePresetHint }
+): Note[] {
+  const enabledBlocks = blocks.filter((block) => block.enabled);
+  if (enabledBlocks.length === 0) {
+    return [];
+  }
+
+  const hasRoot = enabledBlocks.some((block) => block.voicingRole === 'root');
+  const baseOctave = getBaseOctaveForCount(enabledBlocks.length, hasRoot, options?.presetHint);
+  let voiced = applyOctaveWrapping(enabledBlocks, baseOctave);
+
+  if (hasRoot) {
+    voiced = enforceRootLowestPitch(enabledBlocks, voiced);
+  }
+
+  voiced = applyGlobalConstraints(voiced, enabledBlocks.length);
+  return voiced;
+}
+
+export function getRootWarning(blocks: PlaygroundBlock[]): string | null {
+  const enabled = blocks.filter((block) => block.enabled);
+  if (enabled.length === 0) return null;
+  const rootIndex = enabled.findIndex((block) => block.voicingRole === 'root');
+  if (rootIndex <= 0) {
+    return rootIndex === -1 ? null : null;
+  }
+  return 'Root should be lowest for clear harmony';
 }

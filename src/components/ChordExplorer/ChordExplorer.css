@@ -332,6 +332,39 @@
   line-height: 1.4;
 }
 
+.playground-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.playground-presets__button {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.2);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.playground-presets__button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.playground-presets__button.is-active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: white;
+}
+
+.playground-presets__button--ghost {
+  border-style: dashed;
+  opacity: 0.8;
+}
+
 .playground-blocks {
   display: flex;
   gap: 12px;

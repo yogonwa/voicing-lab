@@ -30,6 +30,14 @@ interface PlaygroundPanelProps {
   onReorder: (next: PlaygroundBlock[]) => void;
   onToggle: (blockId: string) => void;
   warningMessage?: string | null;
+  presets: {
+    id: string;
+    name: string;
+    description: string;
+  }[];
+  activePresetId: string | null;
+  onPresetSelect: (presetId: string) => void;
+  onPresetReset: () => void;
 }
 
 interface SortableBlockProps {
@@ -87,7 +95,16 @@ function SortableBlock({ block, onToggle }: SortableBlockProps) {
   );
 }
 
-export function PlaygroundPanel({ blocks, onReorder, onToggle, warningMessage }: PlaygroundPanelProps) {
+export function PlaygroundPanel({
+  blocks,
+  onReorder,
+  onToggle,
+  warningMessage,
+  presets,
+  activePresetId,
+  onPresetSelect,
+  onPresetReset,
+}: PlaygroundPanelProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
@@ -126,6 +143,27 @@ export function PlaygroundPanel({ blocks, onReorder, onToggle, warningMessage }:
         or select a block and use the arrow keys. Disabled blocks stay in the list so you can compare
         against the full template.
       </p>
+
+      <div className="playground-presets">
+        {presets.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            className={`playground-presets__button ${activePresetId === preset.id ? 'is-active' : ''}`}
+            onClick={() => onPresetSelect(preset.id)}
+            title={preset.description}
+          >
+            {preset.name}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="playground-presets__button playground-presets__button--ghost"
+          onClick={onPresetReset}
+        >
+          Reset
+        </button>
+      </div>
 
       <DndContext
         sensors={sensors}
