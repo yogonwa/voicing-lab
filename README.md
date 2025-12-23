@@ -137,20 +137,34 @@ Layer 3: voicingGenerator   → WHERE on piano (D3, F4, C5)
 | `2` | Shell Position B |
 | `3` | Open Voicing |
 
-## Roadmap
+## Documentation
 
-See [docs/Design_Doc.md](docs/Design_Doc.md) for full product vision.
+### Primary Docs
+- **[ROADMAP.md](docs/ROADMAP.md)** — Current status, NOW/NEXT/LATER priorities
+- **[DESIGN_DOC.md](docs/DESIGN_DOC.md)** — Complete design specifications with numbered features
+- **[OctavePlacement.md](docs/OctavePlacement.md)** — Implementation spec for octave placement algorithm
 
-### Completed
-- **Phase 1:** ✅ Text-based algorithm proof of concept
-- **Phase 2:** ✅ Audio playback with Tone.js
-- **Phase 3:** ✅ Piano keyboard visualization
-- **Phase 4:** ✅ Polish & ship MVP
+### Archive
+Historical design docs are in [docs/archive/](docs/archive/) for reference.
+
+## Current Status
+
+**Now Building:** Phase 4 - Playground Mode v2 (Hand Mode + Inversions) 🚧
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for detailed timeline and feature specifications.
+
+### Completed Phases
+- **Phase 1 (F1):** ✅ Foundation (Chord Calculator, Templates, Audio, Keyboard)
+- **Phase 2 (F2):** ✅ Template Mode (Extensions 9/11/13)
+- **Phase 3 (F3):** ✅ Playground Mode v1 (Drag-drop, Toggle, Presets)
+
+### In Progress
+- **Phase 4 (F4):** 🚧 Playground Mode v2 (Hand Mode, Inversions, Enharmonic Display)
 
 ### Next Up
-- **Decision Tree Navigator** — Pick voicings interactively, see voice leading arrows
-- **More Voicing Types** — Rootless, Drop-2, Extensions
-- **Key Transposition** — Practice in all 12 keys
+- **Phase 5 (F5):** Multi-State Extension Blocks in Playground
+- **Phase 6 (F6):** Context-Aware Voicing Recognition ("You found a Drop-2!")
+- **Phase 7 (F7):** Decision Tree Navigator (Interactive voice leading)
 
 ## License
 
