@@ -13,12 +13,12 @@ Currently building **Phase 4: Playground Mode v2** - Adding hand mode context an
 
 ### F4: Playground Mode v2
 
-- [ ] **F4.1** - Hand Mode Toggle (Single | Two)
+- [x] **F4.1** - Hand Mode Toggle (Single | Two) ✅
   - Add toggle button in Playground UI
   - Filter presets based on hand mode
   - Update voicing logic per mode
 
-- [ ] **F4.2** - Single-Hand Presets (Triads + 7th Inversions)
+- [x] **F4.2** - Single-Hand Presets (Triads + 7th Inversions) ✅
   - Triad (1-3-5)
   - Triad 1st Inversion (3-5-1)
   - Triad 2nd Inversion (5-1-3)
@@ -302,7 +302,7 @@ Completed: December 2025
 ## Success Metrics
 
 ### Phase 4 Success
-- [ ] Users can practice triad inversions in single-hand mode
+- [x] Users can practice triad inversions in single-hand mode ✅
 - [ ] Two-hand divider clearly shows LH/RH split
 - [ ] Chord symbols display with correct enharmonic spelling
 
