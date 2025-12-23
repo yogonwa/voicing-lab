@@ -4,6 +4,13 @@ import type { Note, VoicingRole } from '../../lib/voicingTemplates';
 import { getNoteChroma, parseNote, toMidi } from '../../lib/core';
 
 /**
+ * Hand mode for Playground Mode.
+ * - 'single': Single-hand mode for learning chord shapes and inversions in close position
+ * - 'two': Two-hand mode for comping with spread voicings (LH + RH)
+ */
+export type HandMode = 'single' | 'two';
+
+/**
  * Playground block metadata used across the Chord Explorer.
  * Blocks represent each chord tone/extension that can be reordered
  * inside Playground Mode.
@@ -343,23 +350,26 @@ function getBaseOctaveForCount(noteCount: number, hasRoot: boolean, hint?: Voice
   return 4;
 }
 
-function getTargetSpread(noteCount: number): number {
+function getTargetSpread(noteCount: number, hint?: VoicePresetHint): number {
   if (noteCount <= 2) return 12;
   // For 3-note voicings, allow close-position triads/shells (e.g. E–G–B spans 7 semitones)
   // while still spreading truly clustered stacks (e.g. C–D–E spans 4).
   if (noteCount === 3) return 7;
+  // For compact voicings (single-hand), keep 4-note chords within one octave (11 semitones)
+  if (noteCount === 4 && hint === 'compact') return 11;
   if (noteCount === 4) return 18;
   if (noteCount === 5) return 24;
   return 30;
 }
 
-function applyOctaveWrapping(blocks: PlaygroundBlock[], baseOctave: number): Note[] {
+function applyOctaveWrapping(blocks: PlaygroundBlock[], baseOctave: number, hint?: VoicePresetHint): Note[] {
   const result: Note[] = [];
   let currentOctave = baseOctave;
   let previousChroma: number | null = null;
 
   blocks.forEach((block) => {
     const chroma = getNoteChroma(block.note);
+    // Wrap to next octave when chromatic pitch decreases (e.g., G→C in inversions)
     if (previousChroma !== null && chroma < previousChroma) {
       currentOctave += 1;
     }
@@ -442,13 +452,13 @@ function clampToPlayableRange(notes: Note[]): Note[] {
   });
 }
 
-function ensureMinimumSpread(notes: Note[], noteCount: number): Note[] {
+function ensureMinimumSpread(notes: Note[], noteCount: number, hint?: VoicePresetHint): Note[] {
   if (noteCount <= 2 || notes.length < 2) {
     return notes;
   }
 
   const adjusted = [...notes];
-  const targetSpread = getTargetSpread(noteCount);
+  const targetSpread = getTargetSpread(noteCount, hint);
   let lowest = getAbsolutePitch(adjusted[0]);
   let highest = getAbsolutePitch(adjusted[adjusted.length - 1]);
 
@@ -474,11 +484,11 @@ function clampMaximumSpread(notes: Note[]): Note[] {
   return adjusted;
 }
 
-function applyGlobalConstraints(notes: Note[], noteCount: number): Note[] {
+function applyGlobalConstraints(notes: Note[], noteCount: number, hint?: VoicePresetHint): Note[] {
   let adjusted = [...notes];
   adjusted = avoidMuddyBass(adjusted);
   adjusted = clampTopRange(adjusted);
-  adjusted = ensureMinimumSpread(adjusted, noteCount);
+  adjusted = ensureMinimumSpread(adjusted, noteCount, hint);
   adjusted = clampMaximumSpread(adjusted);
   adjusted = clampToPlayableRange(adjusted);
   return adjusted;
@@ -493,6 +503,22 @@ export function voicePlaygroundBlocks(
     return [];
   }
 
+  const hint = options?.presetHint;
+  const isCompact = hint === 'compact';
+
+  // For compact (single-hand) mode, use simplified octave placement
+  // to keep all notes within one octave span for learning inversions
+  if (isCompact) {
+    const baseOctave = 4; // Consistent octave for single-hand voicings
+    let voiced = applyOctaveWrapping(enabledBlocks, baseOctave, hint);
+    
+    // Only apply essential constraints
+    voiced = clampTopRange(voiced);
+    voiced = clampToPlayableRange(voiced);
+    return voiced;
+  }
+
+  // Two-hand mode: apply full octave placement algorithm
   const rootIndex = enabledBlocks.findIndex((block) => block.voicingRole === 'root');
   const hasRoot = rootIndex !== -1;
   // In Playground Mode we respect the user's drag order both visually and audibly.
@@ -501,14 +527,14 @@ export function voicePlaygroundBlocks(
   // we show a warning but do NOT force root to be the lowest pitch in the audio output.
   const shouldKeepRootLowest = rootIndex === 0;
 
-  const baseOctave = getBaseOctaveForCount(enabledBlocks.length, hasRoot, options?.presetHint);
-  let voiced = applyOctaveWrapping(enabledBlocks, baseOctave);
+  const baseOctave = getBaseOctaveForCount(enabledBlocks.length, hasRoot, hint);
+  let voiced = applyOctaveWrapping(enabledBlocks, baseOctave, hint);
 
   if (hasRoot && shouldKeepRootLowest) {
     voiced = enforceRootLowestPitch(enabledBlocks, voiced);
   }
 
-  voiced = applyGlobalConstraints(voiced, enabledBlocks.length);
+  voiced = applyGlobalConstraints(voiced, enabledBlocks.length, hint);
   return voiced;
 }
 

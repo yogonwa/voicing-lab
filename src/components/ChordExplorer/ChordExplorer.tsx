@@ -40,6 +40,7 @@ import { PlaygroundPanel } from './PlaygroundPanel';
 import {
   PlaygroundBlock,
   VoicePresetHint,
+  HandMode,
   buildPlaygroundBlocks,
   mergePlaygroundBlocks,
   getEnabledBlocks,
@@ -75,6 +76,7 @@ interface PlaygroundPreset {
   id: string;
   name: string;
   description: string;
+  handMode: HandMode | 'both';
   order: string[];
   disabled?: string[];
   voiceHint?: VoicePresetHint;
@@ -85,6 +87,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     id: 'shell-a',
     name: 'Shell A',
     description: '1-3-7 guides',
+    handMode: 'two',
     order: ['root', 'third', 'seventh'],
     disabled: ['fifth'],
     voiceHint: 'compact',
@@ -93,6 +96,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     id: 'shell-b',
     name: 'Shell B',
     description: '1-7-3 inversion',
+    handMode: 'two',
     order: ['root', 'seventh', 'third'],
     disabled: ['fifth'],
     voiceHint: 'compact',
@@ -101,6 +105,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     id: 'open',
     name: 'Open',
     description: '1-5-3-7 spread',
+    handMode: 'two',
     order: ['root', 'fifth', 'third', 'seventh'],
     voiceHint: 'spread',
   },
@@ -108,6 +113,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     id: 'rootless-a',
     name: 'Rootless A',
     description: '3-5-7-9',
+    handMode: 'two',
     order: ['third', 'fifth', 'seventh', 'ninth'],
     disabled: ['root'],
     voiceHint: 'compact',
@@ -116,6 +122,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     id: 'rootless-b',
     name: 'Rootless B',
     description: '7-9-3-5',
+    handMode: 'two',
     order: ['seventh', 'ninth', 'third', 'fifth'],
     disabled: ['root'],
     voiceHint: 'compact',
@@ -124,8 +131,74 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     id: 'drop-2',
     name: 'Drop 2',
     description: 'Drop-second voice',
+    handMode: 'two',
     order: ['root', 'fifth', 'third', 'seventh'],
     voiceHint: 'spread',
+  },
+  // Single-hand presets - Triad inversions
+  {
+    id: 'triad-root',
+    name: 'Triad',
+    description: '1-3-5 root position',
+    handMode: 'single',
+    order: ['root', 'third', 'fifth'],
+    disabled: ['seventh', 'ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: 'triad-1st',
+    name: 'Triad 1st Inv',
+    description: '3-5-1 first inversion',
+    handMode: 'single',
+    order: ['third', 'fifth', 'root'],
+    disabled: ['seventh', 'ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: 'triad-2nd',
+    name: 'Triad 2nd Inv',
+    description: '5-1-3 second inversion',
+    handMode: 'single',
+    order: ['fifth', 'root', 'third'],
+    disabled: ['seventh', 'ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
+  },
+  // Single-hand presets - 7th chord inversions
+  {
+    id: '7th-root',
+    name: '7th Close',
+    description: '1-3-5-7 close position',
+    handMode: 'single',
+    order: ['root', 'third', 'fifth', 'seventh'],
+    disabled: ['ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: '7th-1st',
+    name: '7th 1st Inv',
+    description: '3-5-7-1 first inversion',
+    handMode: 'single',
+    order: ['third', 'fifth', 'seventh', 'root'],
+    disabled: ['ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: '7th-2nd',
+    name: '7th 2nd Inv',
+    description: '5-7-1-3 second inversion',
+    handMode: 'single',
+    order: ['fifth', 'seventh', 'root', 'third'],
+    disabled: ['ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
+  },
+  {
+    id: '7th-3rd',
+    name: '7th 3rd Inv',
+    description: '7-1-3-5 third inversion',
+    handMode: 'single',
+    order: ['seventh', 'root', 'third', 'fifth'],
+    disabled: ['ninth', 'eleventh', 'thirteenth'],
+    voiceHint: 'compact',
   },
 ];
 
@@ -227,6 +300,7 @@ export function ChordExplorer() {
   const [selectedQuality, setSelectedQuality] = useState<ChordQuality>('maj7');
   const [selectedExtensions, setSelectedExtensions] = useState<SelectedExtensions>(createEmptyExtensions());
   const [mode, setMode] = useState<ExplorerMode>('template');
+  const [handMode, setHandMode] = useState<HandMode>('two');
   const [playgroundBlocks, setPlaygroundBlocks] = useState<PlaygroundBlock[]>([]);
   const [playgroundWarning, setPlaygroundWarning] = useState<string | null>(null);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
@@ -266,6 +340,12 @@ export function ChordExplorer() {
     () => getEnabledBlocks(playgroundBlocks),
     [playgroundBlocks]
   );
+
+  const filteredPresets = useMemo(() => {
+    return PLAYGROUND_PRESETS.filter(
+      preset => preset.handMode === handMode || preset.handMode === 'both'
+    );
+  }, [handMode]);
 
   const activePresetHint = useMemo<VoicePresetHint | undefined>(() => {
     if (!activePresetId) return undefined;
@@ -331,6 +411,15 @@ export function ChordExplorer() {
    */
   const handleModeChange = useCallback((nextMode: ExplorerMode) => {
     setMode(nextMode);
+  }, []);
+
+  /**
+   * Switch hand modes and reset active preset
+   */
+  const handleHandModeChange = useCallback((nextHandMode: HandMode) => {
+    setHandMode(nextHandMode);
+    setActivePresetId(null);
+    setPlaygroundWarning(null);
   }, []);
   const handlePlaygroundReorder = useCallback((nextBlocks: PlaygroundBlock[]) => {
     setActivePresetId(null);
@@ -620,7 +709,9 @@ export function ChordExplorer() {
             onReorder={handlePlaygroundReorder}
             onToggle={handlePlaygroundToggle}
             warningMessage={warningMessage}
-            presets={PLAYGROUND_PRESETS}
+            handMode={handMode}
+            onHandModeChange={handleHandModeChange}
+            presets={filteredPresets}
             activePresetId={activePresetId}
             onPresetSelect={handlePresetApply}
             onPresetReset={handlePresetReset}
