@@ -12,14 +12,14 @@ This document defines the algorithm for mapping playground blocks (user-defined 
 
 These rules are **immutable** and must be enforced in all cases:
 
-### Rule 1: Root Always Lowest (If Present)
+### Rule 1: Root Lowest Only When User Keeps It in the Bass Position
 ```
-IF root note exists in the voicing:
-  Root MUST be the lowest pitched note
+IF root note exists AND is the leftmost enabled block (user kept root in bass position):
+  Root SHOULD be the lowest pitched note (standard jazz convention)
   
-IF user drags root out of leftmost position:
+IF user drags root out of leftmost enabled position:
   Display warning: "⚠️ Root should be lowest for clear harmony"
-  Allow the arrangement but keep root lowest in octave placement
+  Allow the arrangement AND respect the user's order in audio (root may not be the lowest pitch)
   
 IF rootless voicing (no root present):
   Leftmost block becomes bass note
@@ -27,21 +27,11 @@ IF rootless voicing (no root present):
 
 **Implementation:**
 ```typescript
-function enforceRootLowest(blocks: PlaygroundBlock[]): PlaygroundBlock[] {
-  const rootBlock = blocks.find(b => b.role === 'root');
-  
-  if (!rootBlock || !rootBlock.enabled) {
-    return blocks; // No root or root disabled - skip rule
-  }
-  
-  const rootIndex = blocks.indexOf(rootBlock);
-  if (rootIndex !== 0) {
-    // Root is not leftmost - show warning but continue
-    showWarning("Root should be lowest for clear harmony");
-  }
-  
-  // Octave placement will ensure root is lowest pitch regardless of drag order
-  return blocks;
+function getRootWarning(blocks: PlaygroundBlock[]): string | null {
+  const enabled = blocks.filter(b => b.enabled);
+  const rootIndex = enabled.findIndex(b => b.role === 'root');
+  if (rootIndex > 0) return "Root should be lowest for clear harmony";
+  return null;
 }
 ```
 
@@ -54,7 +44,11 @@ The span from lowest to highest note must be at least 12 semitones (1 octave)
 IF all notes would cluster within less than 1 octave:
   Force distribution across full octave
   
-Exception: 2-note voicings (power chords, intervals) can be < 1 octave
+Exceptions (musical + UX):
+- 2-note voicings (power chords, intervals) can be < 1 octave
+- 3-note voicings (shells/triads) may be < 1 octave if they are not overly clustered.
+  Typical close-position shells/triads often span 7–11 semitones and should be allowed.
+  We only force extra spread for 3-note clusters that sound/feel cramped.
 ```
 
 ---
@@ -122,7 +116,7 @@ These rules adapt based on **note count** and **density**:
 
 ```
 3 notes (shell voicings):
-  Target spread: 12 semitones (1 octave)
+  Target spread: ~7 semitones (perfect 5th) minimum, allow close-position shells/triads
   Base octave: 4
   Example: C4, E4, B4
 
@@ -146,7 +140,9 @@ These rules adapt based on **note count** and **density**:
 ```typescript
 function getTargetSpread(noteCount: number): number {
   if (noteCount <= 2) return 12;  // Minimum 1 octave
-  if (noteCount === 3) return 12;  // Shell range
+  // For 3-note voicings, allow close-position shells/triads (e.g. E–G–B spans 7 semitones)
+  // while still spreading truly clustered stacks (e.g. C–D–E spans 4).
+  if (noteCount === 3) return 7;
   if (noteCount === 4) return 18;  // 1.5 octaves
   if (noteCount === 5) return 24;  // 2 octaves
   return 30; // Max 2.5 octaves
@@ -595,7 +591,7 @@ If exceeds B6, compress by lowering top notes
 ```
 Input: [R: C] [3: E] [7: B]
 Expected: C4, E4, B4
-Validation: All in octave 4, span = 11 semitones
+Validation: All in octave 4, span = 11 semitones (allowed for 3-note shells)
 ```
 
 ### Test 2: Shell B Preset

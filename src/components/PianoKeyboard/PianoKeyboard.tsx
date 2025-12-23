@@ -10,15 +10,13 @@ import './PianoKeyboard.css';
 import { PianoKey } from './PianoKey';
 import { PianoKeyboardProps } from './types';
 import { findActiveNote } from './utils';
-import { Note } from '../../lib';
+import { Note } from '../../lib/core';
 
 // ============================================
 // CONSTANTS
 // ============================================
 
 /** Notes in one octave */
-const NOTES_IN_OCTAVE = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
 /** White notes only */
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 

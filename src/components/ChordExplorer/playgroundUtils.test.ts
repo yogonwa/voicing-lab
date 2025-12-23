@@ -58,6 +58,23 @@ describe('voicePlaygroundBlocks', () => {
     expect(voicePlaygroundBlocks(blocks)).toEqual(['C4', 'E4', 'B4']);
   });
 
+  it('widens overly clustered 3-note stacks while allowing normal close-position shells', () => {
+    const compactShell = [
+      buildBlock({ id: 'third', note: 'E', role: 'third' }),
+      buildBlock({ id: 'fifth', note: 'G', role: 'fifth' }),
+      buildBlock({ id: 'seventh', note: 'B', role: 'seventh' }),
+    ];
+    expect(voicePlaygroundBlocks(compactShell)).toEqual(['E4', 'G4', 'B4']);
+
+    const clustered = [
+      buildBlock({ id: 'root', note: 'C', role: 'root' }),
+      buildBlock({ id: 'third', note: 'D', role: 'third' }),
+      buildBlock({ id: 'fifth', note: 'E', role: 'fifth' }),
+    ];
+    // C–D–E in the same octave is a tight cluster; we widen by lifting the top voice.
+    expect(voicePlaygroundBlocks(clustered)).toEqual(['C4', 'D4', 'E5']);
+  });
+
   it('wraps upward when pitch class decreases', () => {
     const blocks = [
       buildBlock({ id: 'root', note: 'C', role: 'root' }),
@@ -68,7 +85,7 @@ describe('voicePlaygroundBlocks', () => {
     expect(voicePlaygroundBlocks(blocks)).toEqual(['C4', 'B4', 'E5']);
   });
 
-  it('keeps the root as the lowest pitch even if dragged later', () => {
+  it('respects drag order audibly when the root is not leftmost (root may not be the lowest pitch)', () => {
     const blocks = [
       buildBlock({ id: 'third', note: 'E', role: 'third' }),
       buildBlock({ id: 'root', note: 'C', role: 'root' }),
@@ -76,11 +93,7 @@ describe('voicePlaygroundBlocks', () => {
     ];
 
     const voiced = voicePlaygroundBlocks(blocks);
-    expect(voiced).toEqual(['E4', 'C4', 'G5']);
-
-    const midiValues = voiced.map(midi);
-    const rootPitch = midiValues[1];
-    expect(rootPitch).toBeLessThan(midiValues[0]);
+    expect(voiced).toEqual(['E4', 'C5', 'G5']);
   });
 
   it('respects rootless voicings without forcing a drop', () => {

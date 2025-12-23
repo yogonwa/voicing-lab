@@ -9,15 +9,16 @@
 
 import { 
   Note, 
+  NoteName,
   VoicedChord, 
   VoicingRole, 
-  ChordTones, 
   ExtendedChordTones,
-  getChordTones, 
   getExtendedChordTones,
-  Chord 
-} from '../../lib';
-import { ActiveNote, KeyLayout, Hand } from './types';
+  Chord,
+  parseNote,
+  getVoicingRoleForNoteName,
+} from '../../lib/core';
+import { ActiveNote, KeyLayout } from './types';
 
 // ============================================
 // CONSTANTS
@@ -41,16 +42,6 @@ const BLACK_KEY_OFFSETS: Record<string, number> = {
 // ============================================
 // NOTE HELPERS
 // ============================================
-
-/**
- * Parse a note string into name and octave
- * @example parseNote("C#4") → { name: "C#", octave: 4 }
- */
-export function parseNote(note: Note): { name: string; octave: number } {
-  const match = note.match(/^([A-G]#?)(\d)$/);
-  if (!match) throw new Error(`Invalid note: ${note}`);
-  return { name: match[1], octave: parseInt(match[2], 10) };
-}
 
 /**
  * Check if a note is a black key
@@ -121,31 +112,10 @@ export function generateKeyboardLayout(
  * Supports both basic tones and extensions.
  */
 function getNoteRole(
-  noteName: string,
+  noteName: NoteName,
   chordTones: ExtendedChordTones
 ): VoicingRole | undefined {
-  // Basic chord tones
-  if (noteName === chordTones.root) return 'root';
-  if (noteName === chordTones.third) return 'third';
-  if (noteName === chordTones.fifth) return 'fifth';
-  if (noteName === chordTones.seventh) return 'seventh';
-  
-  // Extensions
-  if (chordTones.extensions) {
-    if (noteName === chordTones.extensions.ninth) return 'ninth';
-    if (noteName === chordTones.extensions.eleventh) return 'eleventh';
-    if (noteName === chordTones.extensions.thirteenth) return 'thirteenth';
-  }
-  
-  // Alterations (for dom7 chords)
-  if (chordTones.alterations) {
-    if (noteName === chordTones.alterations.flatNinth) return 'flatNinth';
-    if (noteName === chordTones.alterations.sharpNinth) return 'sharpNinth';
-    if (noteName === chordTones.alterations.sharpEleventh) return 'sharpEleventh';
-    if (noteName === chordTones.alterations.flatThirteenth) return 'flatThirteenth';
-  }
-  
-  return undefined;
+  return getVoicingRoleForNoteName(chordTones, noteName);
 }
 
 /**

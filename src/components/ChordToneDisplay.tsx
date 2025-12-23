@@ -1,9 +1,13 @@
 /**
  * ChordToneDisplay Component
  *
- * Interactive chord calculator test harness.
+ * Interactive chord calculator **dev harness** (intentionally kept).
  * - Shows validation for ii-V-I progression
  * - Allows testing any root × quality combination
+ *
+ * Note: This component is not the primary UX. It exists as a quick, reliable
+ * regression surface for chord-tone correctness while iterating on more complex
+ * UI (ChordExplorer / Playground / future Decision Tree).
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -15,11 +19,13 @@ import {
   NoteName,
   ChordQuality,
   CHROMATIC_SCALE,
+  VoicedChord,
+} from '../lib/core';
+import {
   initAudio,
   isAudioReady,
   playVoicing,
-  VoicedChord,
-} from '../lib';
+} from '../lib/audio';
 
 // ============================================
 // TYPES

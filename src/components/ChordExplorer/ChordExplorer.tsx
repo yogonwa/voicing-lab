@@ -14,10 +14,6 @@ import {
   CHROMATIC_SCALE,
   getExtendedChordTones,
   ExtendedChordTones,
-  initAudio,
-  isAudioReady,
-  playVoicing,
-  playArpeggio,
   VoicedChord,
   SelectedExtensions,
   ExtensionKey,
@@ -25,10 +21,19 @@ import {
   buildChordSymbol,
   getActiveExtensionKeys,
   EXTENSION_TIPS,
+  DEFAULT_EXTENSION_RENDER_ORDER,
+  getNoteNameForExtensionKey,
+  getVoicingRoleForExtensionKey,
   Note,
   VoicingRole,
-} from '../../lib';
-import { PianoKeyboard } from '../PianoKeyboard';
+} from '../../lib/core';
+import {
+  initAudio,
+  isAudioReady,
+  playVoicing,
+  playArpeggio,
+} from '../../lib/audio';
+import { PianoKeyboard, type ActiveNote } from '../PianoKeyboard';
 import { ExtensionPanel } from './ExtensionPanel';
 import { NoteBlocks } from './NoteBlocks';
 import { PlaygroundPanel } from './PlaygroundPanel';
@@ -48,11 +53,7 @@ import {
 // TYPES
 // ============================================
 
-interface ActiveNoteForKeyboard {
-  note: string;
-  role: VoicingRole;
-  hand: 'left' | 'right';
-}
+type ActiveNoteForKeyboard = ActiveNote;
 
 // ============================================
 // CONSTANTS
@@ -138,73 +139,30 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
  * No hand differentiation for chord explorer.
  */
 type TemplateNote = {
-  note: string;
+  note: Note;
   role: VoicingRole;
 };
-
-const EXTENSION_RENDER_ORDER: ExtensionKey[] = [
-  'ninth',
-  'flatNinth',
-  'sharpNinth',
-  'eleventh',
-  'sharpEleventh',
-  'thirteenth',
-  'flatThirteenth',
-];
 
 function buildTemplateNoteSequence(
   chordTones: ExtendedChordTones,
   selectedExtensions: SelectedExtensions
 ): TemplateNote[] {
   const sequence: TemplateNote[] = [
-    { note: `${chordTones.root}${TEMPLATE_ROOT_OCTAVE}`, role: 'root' },
-    { note: `${chordTones.third}${TEMPLATE_ROOT_OCTAVE}`, role: 'third' },
-    { note: `${chordTones.fifth}${TEMPLATE_ROOT_OCTAVE}`, role: 'fifth' },
-    { note: `${chordTones.seventh}${TEMPLATE_ROOT_OCTAVE}`, role: 'seventh' },
+    { note: `${chordTones.root}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'root' },
+    { note: `${chordTones.third}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'third' },
+    { note: `${chordTones.fifth}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'fifth' },
+    { note: `${chordTones.seventh}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'seventh' },
   ];
 
-  EXTENSION_RENDER_ORDER.forEach((key) => {
+  DEFAULT_EXTENSION_RENDER_ORDER.forEach((key) => {
     if (!selectedExtensions[key]) return;
 
-    let noteName: string | undefined;
-    let role: VoicingRole;
-
-    switch (key) {
-      case 'ninth':
-        noteName = chordTones.extensions?.ninth;
-        role = 'ninth';
-        break;
-      case 'flatNinth':
-        noteName = chordTones.alterations?.flatNinth;
-        role = 'flatNinth';
-        break;
-      case 'sharpNinth':
-        noteName = chordTones.alterations?.sharpNinth;
-        role = 'sharpNinth';
-        break;
-      case 'eleventh':
-        noteName = chordTones.extensions?.eleventh;
-        role = 'eleventh';
-        break;
-      case 'sharpEleventh':
-        noteName = chordTones.extensions?.sharpEleventh;
-        role = 'sharpEleventh';
-        break;
-      case 'thirteenth':
-        noteName = chordTones.extensions?.thirteenth;
-        role = 'thirteenth';
-        break;
-      case 'flatThirteenth':
-        noteName = chordTones.alterations?.flatThirteenth;
-        role = 'flatThirteenth';
-        break;
-      default:
-        role = 'ninth';
-    }
+    const noteName = getNoteNameForExtensionKey(chordTones, key);
+    const role = getVoicingRoleForExtensionKey(key);
 
     if (noteName) {
       sequence.push({
-        note: `${noteName}${TEMPLATE_EXTENSION_OCTAVE}`,
+        note: `${noteName}${TEMPLATE_EXTENSION_OCTAVE}` as Note,
         role,
       });
     }
@@ -233,18 +191,13 @@ function buildBlockChordVoicing(
   selectedExtensions: SelectedExtensions
 ): VoicedChord {
   const sequence = buildTemplateNoteSequence(chordTones, selectedExtensions);
-  const leftHand = sequence.slice(0, 1).map((entry) => entry.note as Note);
-  const rightHand = sequence.slice(1).map((entry) => entry.note as Note);
+  const leftHand = sequence.slice(0, 1).map((entry) => entry.note);
+  const rightHand = sequence.slice(1).map((entry) => entry.note);
 
   return {
     leftHand: leftHand as VoicedChord['leftHand'],
     rightHand: rightHand as VoicedChord['rightHand'],
   };
-}
-
-function getOctaveFromNoteString(note: string): number {
-  const match = note.match(/(\d+)$/);
-  return match ? parseInt(match[1], 10) : 4;
 }
 
 /**
@@ -676,7 +629,7 @@ export function ChordExplorer() {
 
         <div className="keyboard-container">
           <PianoKeyboard
-            activeNotes={activeNotes as any}
+            activeNotes={activeNotes}
             startOctave={3}
             endOctave={6}
           />

@@ -22,11 +22,13 @@ import {
   VoicingTemplate,
   VoicedChord,
   Chord,
+} from '../lib/core';
+import {
   initAudio,
   isAudioReady,
   playVoicing,
   playProgression,
-} from '../lib';
+} from '../lib/audio';
 import { PianoKeyboard, KeyboardLegend, getActiveNotes, ActiveNote } from './PianoKeyboard';
 
 // ============================================

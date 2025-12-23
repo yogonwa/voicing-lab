@@ -11,9 +11,11 @@ import {
   NoteName,
   ExtendedChordTones,
   SelectedExtensions,
-  ExtensionKey,
   EXTENSION_LABELS,
-} from '../../lib';
+  DEFAULT_EXTENSION_RENDER_ORDER,
+  getNoteNameForExtensionKey,
+  getVoicingRoleForExtensionKey,
+} from '../../lib/core';
 
 // ============================================
 // TYPES
@@ -46,58 +48,23 @@ export function NoteBlocks({ chordTones, selectedExtensions }: NoteBlocksProps) 
   ];
 
   // Add selected extensions
-  const extensionOrder: ExtensionKey[] = [
-    "ninth", "flatNinth", "sharpNinth",
-    "eleventh", "sharpEleventh",
-    "thirteenth", "flatThirteenth"
-  ];
+  DEFAULT_EXTENSION_RENDER_ORDER.forEach((key) => {
+    if (!selectedExtensions[key]) return;
+    const note = getNoteNameForExtensionKey(chordTones, key);
+    if (!note) return;
 
-  extensionOrder.forEach(key => {
-    if (selectedExtensions[key]) {
-      let note: NoteName | undefined;
-      let role: string;
+    // CSS uses kebab-case for altered roles.
+    const voicingRole = getVoicingRoleForExtensionKey(key);
+    const cssRole = voicingRole
+      .replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)
+      .toLowerCase();
 
-      // Get the note from the appropriate place
-      switch (key) {
-        case "ninth":
-          note = chordTones.extensions?.ninth;
-          role = "ninth";
-          break;
-        case "flatNinth":
-          note = chordTones.alterations?.flatNinth;
-          role = "flat-ninth";
-          break;
-        case "sharpNinth":
-          note = chordTones.alterations?.sharpNinth;
-          role = "sharp-ninth";
-          break;
-        case "eleventh":
-          note = chordTones.extensions?.eleventh;
-          role = "eleventh";
-          break;
-        case "sharpEleventh":
-          note = chordTones.extensions?.sharpEleventh;  // #11 is in extensions for all chords
-          role = "sharp-eleventh";
-          break;
-        case "thirteenth":
-          note = chordTones.extensions?.thirteenth;
-          role = "thirteenth";
-          break;
-        case "flatThirteenth":
-          note = chordTones.alterations?.flatThirteenth;
-          role = "flat-thirteenth";
-          break;
-      }
-
-      if (note) {
-        notes.push({
-          note,
-          label: EXTENSION_LABELS[key],
-          role,
-          isExtension: true,
-        });
-      }
-    }
+    notes.push({
+      note,
+      label: EXTENSION_LABELS[key],
+      role: cssRole,
+      isExtension: true,
+    });
   });
 
   // Separate chord tones and extensions for display

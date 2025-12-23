@@ -35,9 +35,13 @@ src/
 │   ├── voicingTemplates.ts       # Layer 2: Voicing patterns
 │   ├── voicingGenerator.ts       # Layer 3: Generate playable voicings
 │   ├── audioEngine.ts            # Tone.js audio playback
-│   ├── index.ts                  # Barrel exports
+│   ├── core.ts                   # Pure barrel exports (no Tone.js)
+│   ├── audio.ts                  # Audio exports (Tone.js boundary)
+│   ├── noteUtils.ts              # Canonical note parsing/pitch helpers
+│   ├── extensionUtils.ts         # Canonical extension key ↔ note/role helpers
+│   ├── index.ts                  # Core-only re-export (kept for convenience)
 │   └── __mocks__/                # Jest mocks
-│       └── audioEngine.ts
+│       └── audio.ts
 ├── components/
 │   ├── PianoKeyboard/            # Piano visualization (Phase 3)
 │   │   ├── PianoKeyboard.tsx     # Main keyboard component
@@ -45,11 +49,30 @@ src/
 │   │   ├── KeyboardLegend.tsx    # Color/hand legend
 │   │   ├── utils.ts              # Note mapping
 │   │   └── types.ts              # TypeScript interfaces
-│   ├── ChordToneDisplay.tsx      # Interactive chord calculator
+│   ├── ChordToneDisplay.tsx      # Dev harness (regression surface)
 │   ├── VoicingDisplay.tsx        # ii-V-I progression display
 │   └── index.ts                  # Barrel exports
 └── App.tsx                       # Main application
 ```
+
+## Engineering Conventions (keep the repo easy to work in)
+
+### Core vs Audio boundary
+- **Import pure theory/types from** `src/lib/core.ts`
+- **Import audio from** `src/lib/audio.ts`
+- Avoid importing Tone.js transitively from “pure” modules; treat audio as a boundary.
+
+### Single source of truth utilities
+- **Notes/pitch**: `src/lib/noteUtils.ts` is the canonical place for parsing notes and converting to pitch.
+- **Extensions**: `src/lib/extensionUtils.ts` is the canonical mapping for extension keys ↔ note names ↔ roles.
+
+### Playground Mode invariants
+- **Drag order is respected visually and audibly** in Playground Mode.
+- If the user drags the root away from the bass position, we **warn** but do not “correct” the voicing order.
+- See: `docs/PLAYGROUND_MODE.md` and `docs/OctavePlacement.md`.
+
+### Styling
+- Current styling is **component-scoped CSS** (`.css` files). Tailwind is intentionally not used.
 
 ## Development
 

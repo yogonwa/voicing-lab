@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 // Mock the audio engine to avoid Tone.js ESM issues in tests
-jest.mock('../lib/audioEngine');
+jest.mock('../lib/audio');
 
 import { ChordToneDisplay } from './ChordToneDisplay';
 

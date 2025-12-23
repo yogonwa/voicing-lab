@@ -1,12 +1,7 @@
-import {
-  CHROMATIC_SCALE,
-  ExtensionKey,
-  ExtendedChordTones,
-  Note,
-  NoteName,
-  SelectedExtensions,
-  VoicingRole,
-} from '../../lib';
+import type { ExtendedChordTones, NoteName } from '../../lib/chordCalculator';
+import type { ExtensionKey, SelectedExtensions } from '../../lib/extensionConfig';
+import type { Note, VoicingRole } from '../../lib/voicingTemplates';
+import { getNoteChroma, parseNote, toMidi } from '../../lib/core';
 
 /**
  * Playground block metadata used across the Chord Explorer.
@@ -321,25 +316,8 @@ export function updateBlockVariant(block: PlaygroundBlock, key?: ExtensionVarian
 
 export type VoicePresetHint = 'compact' | 'spread';
 
-const NOTE_CHROMAS: Record<NoteName, number> = CHROMATIC_SCALE.reduce((acc, note, index) => {
-  acc[note] = index;
-  return acc;
-}, {} as Record<NoteName, number>);
-
-function getNoteChroma(note: NoteName): number {
-  return NOTE_CHROMAS[note] ?? 0;
-}
-
 function buildNote(note: NoteName, octave: number): Note {
   return `${note}${octave}` as Note;
-}
-
-function parseNote(note: Note): { name: NoteName; octave: number } {
-  const match = note.match(/^([A-G]#?)(\d)$/);
-  if (!match) {
-    throw new Error(`Invalid note: ${note}`);
-  }
-  return { name: match[1] as NoteName, octave: parseInt(match[2], 10) };
 }
 
 function changeOctave(note: Note, delta: number): Note {
@@ -356,10 +334,7 @@ function lowerOctave(note: Note, steps = 1): Note {
   return changeOctave(note, -steps);
 }
 
-function getAbsolutePitch(note: Note): number {
-  const { name, octave } = parseNote(note);
-  return (octave + 1) * 12 + getNoteChroma(name);
-}
+const getAbsolutePitch = toMidi;
 
 function getBaseOctaveForCount(noteCount: number, hasRoot: boolean, hint?: VoicePresetHint): number {
   if (hint === 'compact' && noteCount <= 4) return 4;
@@ -370,7 +345,9 @@ function getBaseOctaveForCount(noteCount: number, hasRoot: boolean, hint?: Voice
 
 function getTargetSpread(noteCount: number): number {
   if (noteCount <= 2) return 12;
-  if (noteCount === 3) return 12;
+  // For 3-note voicings, allow close-position triads/shells (e.g. E–G–B spans 7 semitones)
+  // while still spreading truly clustered stacks (e.g. C–D–E spans 4).
+  if (noteCount === 3) return 7;
   if (noteCount === 4) return 18;
   if (noteCount === 5) return 24;
   return 30;
@@ -516,11 +493,18 @@ export function voicePlaygroundBlocks(
     return [];
   }
 
-  const hasRoot = enabledBlocks.some((block) => block.voicingRole === 'root');
+  const rootIndex = enabledBlocks.findIndex((block) => block.voicingRole === 'root');
+  const hasRoot = rootIndex !== -1;
+  // In Playground Mode we respect the user's drag order both visually and audibly.
+  // We only "assume root in bass" (and thus keep it lowest) when the root is already
+  // the leftmost enabled block. If the user drags root away from the bass position,
+  // we show a warning but do NOT force root to be the lowest pitch in the audio output.
+  const shouldKeepRootLowest = rootIndex === 0;
+
   const baseOctave = getBaseOctaveForCount(enabledBlocks.length, hasRoot, options?.presetHint);
   let voiced = applyOctaveWrapping(enabledBlocks, baseOctave);
 
-  if (hasRoot) {
+  if (hasRoot && shouldKeepRootLowest) {
     voiced = enforceRootLowestPitch(enabledBlocks, voiced);
   }
 

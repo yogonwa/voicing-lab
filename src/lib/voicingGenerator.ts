@@ -14,6 +14,7 @@
 
 import { Chord, ExtendedChordTones, getExtendedChordTones } from './chordCalculator';
 import { VoicingTemplate, VoicedChord, VoicingRole, BasicRole, ExtensionRole, AlterationRole, Note, Octave } from './voicingTemplates';
+import { parseNote } from './noteUtils';
 
 // ============================================
 // CONSTANTS
@@ -69,17 +70,6 @@ function getRoleNote(tones: ExtendedChordTones, role: VoicingRole): string {
   }
   
   throw new Error(`Unknown voicing role: ${role}`);
-}
-
-/**
- * Parse a note string into its components.
- *
- * @example parseNote("F#4") → { name: "F#", octave: 4 }
- */
-function parseNote(note: Note): { name: string; octave: number } {
-  const match = note.match(/^([A-G]#?)(\d)$/);
-  if (!match) throw new Error(`Invalid note format: ${note}`);
-  return { name: match[1], octave: parseInt(match[2], 10) };
 }
 
 // ============================================

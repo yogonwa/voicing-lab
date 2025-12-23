@@ -54,7 +54,7 @@ function SortableBlock({ block, onToggle }: SortableBlockProps) {
     transition,
     isDragging,
   } = useSortable({ id: block.id });
-  const { ['aria-pressed']: _omitPressed, ...restAttributes } = attributes;
+  const { 'aria-pressed': _omitPressed, ...restAttributes } = attributes;
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();

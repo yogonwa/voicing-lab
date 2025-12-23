@@ -7,14 +7,16 @@
 
 import React from 'react';
 import {
+  NoteName,
   ChordQuality,
+  Chord,
   shouldAvoidExtension,
   getExtensionsByGroup,
   SelectedExtensions,
   ExtensionKey,
   ExtensionOption,
   EXTENSION_TIPS,
-} from '../../lib';
+} from '../../lib/core';
 
 // ============================================
 // TYPES
@@ -22,7 +24,7 @@ import {
 
 interface ExtensionPanelProps {
   quality: ChordQuality;
-  root: string;
+  root: NoteName;
   selected: SelectedExtensions;
   onToggle: (key: ExtensionKey) => void;
 }
@@ -79,7 +81,7 @@ export function ExtensionPanel({
   // Map extension keys to their avoid status
   const getWarningText = (key: ExtensionKey): string | undefined => {
     // Check if this extension should be avoided for this quality
-    const chord = { root: root as any, quality };
+    const chord: Chord = { root, quality };
     
     // Map ExtensionKey to the role format used by shouldAvoidExtension
     const roleMap: Record<ExtensionKey, "ninth" | "eleventh" | "thirteenth" | undefined> = {

@@ -4,7 +4,7 @@
  * Shared type definitions for the piano keyboard components.
  */
 
-import { Note, VoicingRole } from '../../lib';
+import { Note, VoicingRole } from '../../lib/core';
 
 // ============================================
 // TYPES
