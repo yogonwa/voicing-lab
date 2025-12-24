@@ -1,0 +1,97 @@
+/**
+ * NoteSelector Styles
+ *
+ * Unified selector area for choosing notes and cycling through variants.
+ */
+
+.note-selector {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.note-selector__title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 4px 0;
+}
+
+.note-selector__description {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 12px 0;
+}
+
+.note-selector__blocks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note-selector-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 70px;
+  padding: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.note-selector-block:hover {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.note-selector-block:focus-visible {
+  outline: 3px solid rgba(100, 200, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.note-selector-block--off {
+  opacity: 0.4;
+  border-style: dashed;
+}
+
+.note-selector-block__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.note-selector-block__note {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  margin-bottom: 6px;
+}
+
+.note-selector-block__states {
+  display: flex;
+  gap: 3px;
+}
+
+.state-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.2s;
+}
+
+.state-dot--active {
+  background: rgba(100, 200, 255, 1);
+  box-shadow: 0 0 6px rgba(100, 200, 255, 0.8);
+}
+

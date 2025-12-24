@@ -10,6 +10,33 @@ import { getNoteChroma, parseNote, toMidi } from '../../lib/core';
  */
 export type ExtensionVariantKey = 'natural' | 'flat' | 'sharp';
 
+/**
+ * Extension families for multi-state cycling.
+ * Each family has different available alterations.
+ */
+export type ExtensionFamily = 'ninth' | 'eleventh' | 'thirteenth';
+
+/**
+ * State cycles for each extension family.
+ * Extensions cycle through: off → natural → alterations → off
+ */
+export const EXTENSION_STATE_CYCLES: Record<ExtensionFamily, readonly ('off' | ExtensionVariantKey)[]> = {
+  ninth: ['off', 'natural', 'flat', 'sharp'] as const,
+  eleventh: ['off', 'natural', 'sharp'] as const,
+  thirteenth: ['off', 'natural', 'flat'] as const,
+};
+
+/**
+ * Get the extension family for a given voicing role.
+ * Returns null for non-extension roles.
+ */
+export function getExtensionFamily(role: VoicingRole): ExtensionFamily | null {
+  if (role === 'ninth' || role === 'flatNinth' || role === 'sharpNinth') return 'ninth';
+  if (role === 'eleventh' || role === 'sharpEleventh') return 'eleventh';
+  if (role === 'thirteenth' || role === 'flatThirteenth') return 'thirteenth';
+  return null;
+}
+
 export interface PlaygroundVariant {
   key: ExtensionVariantKey;
   note: NoteName;
@@ -28,6 +55,8 @@ export interface PlaygroundBlock {
   isExtension: boolean;
   variants?: PlaygroundVariant[];
   variantKey?: ExtensionVariantKey;
+  extensionFamily?: ExtensionFamily; // For multi-state extensions
+  currentState?: 'off' | ExtensionVariantKey; // Explicit state tracking
 }
 
 type ExtensionDegree = 'ninth' | 'eleventh' | 'thirteenth';
@@ -187,8 +216,37 @@ export function buildPlaygroundBlocks(
   EXTENSION_BLOCKS.forEach(({ degree, label }) => {
     const variantDefs = EXTENSION_VARIANTS[degree]
       .map((variant) => {
-        const note = variant.getNote(chordTones);
+        // For playground mode, we need all variants available even if not selected
+        // Try to get the note from chordTones, but calculate it if not available
+        let note = variant.getNote(chordTones);
+        
+        // If note doesn't exist (variant not selected), calculate it manually
+        if (!note) {
+          const root = chordTones.root;
+          const rootChroma = getNoteChroma(root);
+          let targetChroma: number;
+          
+          // Calculate the chromatic interval for each extension alteration
+          if (variant.role === 'flatNinth') {
+            targetChroma = (rootChroma + 13) % 12; // minor 9th = root + 13 semitones
+          } else if (variant.role === 'sharpNinth') {
+            targetChroma = (rootChroma + 15) % 12; // augmented 9th = root + 15 semitones
+          } else if (variant.role === 'sharpEleventh') {
+            targetChroma = (rootChroma + 18) % 12; // augmented 11th = root + 18 semitones
+          } else if (variant.role === 'flatThirteenth') {
+            targetChroma = (rootChroma + 20) % 12; // minor 13th = root + 20 semitones
+          } else {
+            // For natural extensions, fallback to undefined if not in chordTones
+            return undefined;
+          }
+          
+          // Convert chromatic value back to note name
+          const CHROMA_TO_NOTE: NoteName[] = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+          note = CHROMA_TO_NOTE[targetChroma];
+        }
+        
         if (!note) return undefined;
+        
         return {
           key: variant.key,
           note,
@@ -219,6 +277,11 @@ export function buildPlaygroundBlocks(
     });
 
     block = applyVariant(block, block.variantKey);
+    
+    // Set extension family and current state
+    block.extensionFamily = degree as ExtensionFamily;
+    block.currentState = Boolean(selectedVariant) ? block.variantKey : 'off';
+    
     extensionBlocks.push(block);
   });
 
@@ -247,6 +310,7 @@ export function mergePlaygroundBlocks(
       mergedBlock = {
         ...mergedBlock,
         enabled: block.enabled,
+        currentState: block.currentState, // Preserve extension state across merges
       };
       merged.push(mergedBlock);
       nextById.delete(block.id);
@@ -271,10 +335,28 @@ export function getEnabledBlocks(blocks: PlaygroundBlock[]): PlaygroundBlock[] {
 export function getNextVariantKey(
   block: PlaygroundBlock
 ): { nextKey?: ExtensionVariantKey; nextEnabled: boolean } {
+  // For extension blocks with families, use the family-specific cycle
+  if (block.isExtension && block.extensionFamily) {
+    const cycle = EXTENSION_STATE_CYCLES[block.extensionFamily];
+    const currentState = block.currentState || 'off';
+    const currentIndex = cycle.indexOf(currentState as any);
+    
+    // Always cycle to next state (wraps around)
+    const nextIndex = (currentIndex + 1) % cycle.length;
+    const nextState = cycle[nextIndex];
+    
+    return {
+      nextEnabled: nextState !== 'off',
+      nextKey: nextState === 'off' ? block.variantKey : (nextState as ExtensionVariantKey),
+    };
+  }
+
+  // Chord tones: simple on/off toggle
   if (!block.variants || block.variants.length === 0) {
     return { nextEnabled: !block.enabled, nextKey: block.variantKey };
   }
 
+  // Legacy variant cycling (if needed for chord tones with variants)
   const available = VARIANT_SEQUENCE.filter((key) =>
     block.variants!.some((variant) => variant.key === key)
   );

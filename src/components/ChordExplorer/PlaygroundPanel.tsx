@@ -24,11 +24,15 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PlaygroundBlock } from './playgroundUtils';
+import { NoteSelector } from './NoteSelector';
+import { ChordQuality } from '../../lib/core';
 
 interface PlaygroundPanelProps {
-  blocks: PlaygroundBlock[];
+  allBlocks: PlaygroundBlock[];
+  enabledBlocks: PlaygroundBlock[];
+  onBlockCycle: (blockId: string) => void;
+  onBlockRemove: (blockId: string) => void;
   onReorder: (next: PlaygroundBlock[]) => void;
-  onToggle: (blockId: string) => void;
   warningMessage?: string | null;
   presets: {
     id: string;
@@ -38,14 +42,15 @@ interface PlaygroundPanelProps {
   activePresetId: string | null;
   onPresetSelect: (presetId: string) => void;
   onPresetReset: () => void;
+  quality: ChordQuality;
 }
 
 interface SortableBlockProps {
   block: PlaygroundBlock;
-  onToggle: (blockId: string) => void;
+  onRemove: (blockId: string) => void;
 }
 
-function SortableBlock({ block, onToggle }: SortableBlockProps) {
+function SortableBlock({ block, onRemove }: SortableBlockProps) {
   const {
     attributes,
     listeners,
@@ -56,11 +61,11 @@ function SortableBlock({ block, onToggle }: SortableBlockProps) {
   } = useSortable({ id: block.id });
   const { 'aria-pressed': _omitPressed, ...restAttributes } = attributes;
 
-  const handleClick = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleRemove = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    onToggle(block.id);
-  }, [block.id, onToggle]);
+    onRemove(block.id);
+  }, [block.id, onRemove]);
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -70,7 +75,6 @@ function SortableBlock({ block, onToggle }: SortableBlockProps) {
   const classes = [
     'playground-block',
     `note-block--${block.cssRole}`,
-    block.enabled ? 'is-enabled' : 'is-disabled',
     block.isExtension ? 'is-extension' : '',
     isDragging ? 'is-dragging' : '',
   ]
@@ -78,32 +82,44 @@ function SortableBlock({ block, onToggle }: SortableBlockProps) {
     .join(' ');
 
   return (
-    <button
-      type="button"
-      ref={setNodeRef}
-      className={classes}
-      style={style}
-      aria-pressed={block.enabled}
-      onClick={handleClick}
-      {...restAttributes}
-      {...listeners}
-    >
-      <span className="playground-block__label">{block.label}</span>
-      <span className="playground-block__note">{block.note}</span>
-      {!block.enabled && <span className="playground-block__state">off</span>}
-    </button>
+    <div ref={setNodeRef} style={style} className="playground-block-wrapper">
+      <div
+        className={classes}
+        {...restAttributes}
+        {...listeners}
+        role="button"
+        tabIndex={0}
+        aria-label={`${block.label} ${block.note} - drag to reorder`}
+      >
+        <span className="playground-block__label">{block.label}</span>
+        <span className="playground-block__note">{block.note}</span>
+      </div>
+      
+      {/* Remove button (not part of drag handle) */}
+      <button
+        type="button"
+        className="playground-block__remove"
+        onClick={handleRemove}
+        aria-label={`Remove ${block.note}`}
+      >
+        ×
+      </button>
+    </div>
   );
 }
 
 export function PlaygroundPanel({
-  blocks,
+  allBlocks,
+  enabledBlocks,
+  onBlockCycle,
+  onBlockRemove,
   onReorder,
-  onToggle,
   warningMessage,
   presets,
   activePresetId,
   onPresetSelect,
   onPresetReset,
+  quality,
 }: PlaygroundPanelProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -112,20 +128,23 @@ export function PlaygroundPanel({
     })
   );
 
-  const blockIds = useMemo(() => blocks.map((block) => block.id), [blocks]);
+  const blockIds = useMemo(() => enabledBlocks.map((block) => block.id), [enabledBlocks]);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const oldIndex = blocks.findIndex((block) => block.id === active.id);
-      const newIndex = blocks.findIndex((block) => block.id === over.id);
+      const oldIndex = enabledBlocks.findIndex((block) => block.id === active.id);
+      const newIndex = enabledBlocks.findIndex((block) => block.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return;
 
-      onReorder(arrayMove(blocks, oldIndex, newIndex));
+      // Reorder enabled blocks and merge with disabled blocks
+      const reordered = arrayMove(enabledBlocks, oldIndex, newIndex);
+      const disabledBlocks = allBlocks.filter(b => !b.enabled);
+      onReorder([...reordered, ...disabledBlocks]);
     },
-    [blocks, onReorder]
+    [enabledBlocks, allBlocks, onReorder]
   );
 
   return (
@@ -133,13 +152,13 @@ export function PlaygroundPanel({
       <div className="playground-panel__header">
         <div>
           <p className="playground-panel__eyebrow">Playground Mode</p>
-          <h4 className="playground-panel__title">Drag to reorder • Click to toggle</h4>
+          <h4 className="playground-panel__title">Select notes • Drag to reorder</h4>
         </div>
         <span className="playground-panel__status-badge">Live</span>
       </div>
 
       <p className="playground-panel__description">
-        Arrange blocks from left (lowest note) to right (highest note). Drag blocks with a mouse or touch, or select a block and use the arrow keys. Disabled blocks stay in the list so you can compare against the full template.
+        Choose which notes to use, then drag to arrange from left (lowest) to right (highest). Click × to remove notes from the voicing.
       </p>
 
       <div className="playground-presets">
@@ -163,30 +182,40 @@ export function PlaygroundPanel({
         </button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={blockIds} strategy={horizontalListSortingStrategy}>
-          <div className="playground-blocks" aria-live="polite">
-            {blocks.map((block) => (
-              <SortableBlock key={block.id} block={block} onToggle={onToggle} />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+      {/* SELECTOR AREA - All notes */}
+      <NoteSelector blocks={allBlocks} onBlockCycle={onBlockCycle} />
 
-      <div className="playground-panel__axis">
-        <span aria-hidden="true">◀ Lower</span>
-        <span aria-hidden="true">Higher ▶</span>
+      {/* DRAG AREA - Enabled notes only */}
+      <div className="playground-voicing">
+        <h4 className="playground-voicing__title">Voicing Order</h4>
+        <p className="playground-voicing__description">
+          Drag to reorder. Click × to remove.
+        </p>
+        
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={blockIds} strategy={horizontalListSortingStrategy}>
+            <div className="playground-blocks" aria-live="polite">
+              {enabledBlocks.map((block) => (
+                <SortableBlock key={block.id} block={block} onRemove={onBlockRemove} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        <div className="playground-panel__axis">
+          <span aria-hidden="true">◀ Lower</span>
+          <span aria-hidden="true">Higher ▶</span>
+        </div>
       </div>
 
       <div className="playground-panel__helper">
         <p>
-          Click to cycle each block through available variants (Off → natural → flats/sharps). Keep at least two
-          notes active. Drag to experiment with new voicing orders, then play the chord or arpeggio to hear the
-          result reflected on the keyboard.
+          Select notes above to add them to your voicing. Drag blocks to experiment with different orders. 
+          Play the chord or arpeggio to hear each variation instantly on the keyboard.
         </p>
       </div>
 

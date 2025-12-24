@@ -42,30 +42,7 @@ Hand context features (F4.1-F4.3) have been removed from Playground Mode to simp
 
 ## Next (Jan - Feb 2026) 📋
 
-After completing hand mode, focus shifts to making Playground Mode fully featured with extensions and intelligent recognition.
-
-### F5: Extensions in Playground
-
-- [ ] **F5.1** - Multi-State Extension Blocks (Off → 9 → ♭9 → ♯9)
-  - Vertical toggle UI (like Price is Right wheel)
-  - Enforces mutual exclusivity (can't have 9 and ♭9 simultaneously)
-  - States cycle: Off → natural → flat → sharp → Off
-
-- [ ] **F5.2** - Extension Blocks UI (Vertical Toggle)
-  - Visual indicator showing available states
-  - Color coding for alterations
-  - Smooth state transitions
-
-- [ ] **F5.3** - Extension Integration with Presets
-  - Shell A + 9th preset
-  - Shell Altered (1-3-7-♭9-♯11) for V7
-  - Update existing Rootless presets to include 9ths
-
-**Value:** Extensions are core to jazz sound. Without 9ths, voicings sound sparse.
-
-**Estimated Duration:** 2 weeks
-
----
+After completing extensions, focus shifts to intelligent pattern recognition to help users discover jazz vocabulary.
 
 ### F6: Context-Aware Recognition
 
@@ -264,6 +241,38 @@ Completed: December 2025
 
 ---
 
+### F5: Extensions in Playground
+
+Completed: January 2026 (UI Redesign: December 2024)
+
+- [x] **F5.1** - Multi-State Extension Blocks (Off → 9 → ♭9 → ♯9) ✅
+  - Click to cycle through states
+  - Enforces mutual exclusivity (can't have 9 and ♭9 simultaneously)
+  - States cycle based on extension family
+  - All variants available regardless of current selection
+
+- [x] **F5.2** - Unified Note Selector UI ✅
+  - Separate selector area for choosing notes (R-3-5-7-9-11-13)
+  - Fixed sequential order, never reordered
+  - State indicator dots only on extensions (not chord tones)
+  - Unified drag area for enabled notes with X button removal
+
+- [x] **F5.3** - Extension Integration with Presets ✅
+  - Shell A+9 preset added
+  - Shell Altered (1-3-7-♭9-♯11) for V7 added
+  - Rootless presets include 9ths by default
+  - Presets don't affect selector display order
+
+**Value:** Extensions are core to jazz sound. Without 9ths, voicings sound sparse.
+
+**UI Refinement (December 2024):**
+- Redesigned with separate selector and drag areas
+- Fixed extension cycling bug (state persistence + variant availability)
+- Selector always shows R-3-5-7-9-11-13 in fixed order
+- Chord tones toggle on/off, extensions cycle through alterations
+
+---
+
 ## Timeline Summary
 
 | Phase | Features | Timeline | Status |
@@ -272,8 +281,8 @@ Completed: December 2025
 | Phase 2 | F2.1-F2.4 (Template Mode) | Completed | ✅ |
 | Phase 3 | F3.1-F3.6 (Playground v1) | Completed | ✅ |
 | Phase 4 | F4.1-F4.4 (Playground v2) | Completed | ✅ |
-| Phase 5 | F5.1-F5.3 (Extensions) | Jan-Feb 2026 | 📋 Planned |
-| Phase 6 | F6.1-F6.4 (Recognition) | Jan-Feb 2026 | 📋 Planned |
+| Phase 5 | F5.1-F5.3 (Extensions) | Completed | ✅ |
+| **Phase 6** | **F6.1-F6.4 (Recognition)** | **Jan-Feb 2026** | **📋 Next** |
 | Phase 7 | F7.1-F7.5 (Decision Tree) | Feb-Apr 2026 | 📅 Later |
 | Phase 8 | F8.1-F8.5 (Advanced) | TBD | 💡 Ideas |
 
@@ -287,7 +296,7 @@ Completed: December 2025
 
 1. **Phase 4 First (Hand Mode)**: Foundational for learning chord shapes. Single-hand inversions are prerequisites to understanding shells/rootless.
 
-2. **Phase 5 Next (Extensions)**: Extensions are core to jazz sound, not optional. Rootless voicings (3-5-7-9) require 9ths. Current voicings sound sparse without extensions.
+2. **Phase 5 Complete (Extensions)**: Extensions are now integrated. Rootless voicings include 9ths by default. Users can cycle through alterations (♭9, ♯9, ♯11, ♭13) to explore jazz harmony.
 
 3. **Phase 6 Before Phase 7 (Recognition)**: Low-effort, high-value feature. Provides immediate pedagogical feedback. Builds excitement for Decision Tree.
 
@@ -304,9 +313,9 @@ Completed: December 2025
 - [x] Hand features deferred to appropriate future phases ✅
 
 ### Phase 5 Success
-- [ ] Extensions integrate seamlessly with existing presets
-- [ ] Users understand mutual exclusivity of alterations
-- [ ] Voicings sound "jazzy" with 9ths
+- [x] Extensions integrate seamlessly with existing presets ✅
+- [x] Users understand mutual exclusivity of alterations ✅
+- [x] Voicings sound "jazzy" with 9ths ✅
 
 ### Phase 6 Success
 - [ ] System recognizes standard voicings as user builds them

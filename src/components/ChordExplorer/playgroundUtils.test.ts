@@ -1,4 +1,10 @@
-import { PlaygroundBlock, voicePlaygroundBlocks, getRootWarning } from './playgroundUtils';
+import { 
+  PlaygroundBlock, 
+  voicePlaygroundBlocks, 
+  getRootWarning,
+  getNextVariantKey,
+  EXTENSION_STATE_CYCLES,
+} from './playgroundUtils';
 import { NoteName } from '../../lib/chordCalculator';
 
 const NOTE_TO_CHROMA: Record<NoteName, number> = {
@@ -172,5 +178,100 @@ describe('getRootWarning', () => {
       buildBlock({ id: 'third', note: 'E', role: 'third' }),
     ];
     expect(getRootWarning(disabledRoot)).toBeNull();
+  });
+});
+
+describe('getNextVariantKey - extension cycling with off state', () => {
+  function createExtensionBlock(
+    family: 'ninth' | 'eleventh' | 'thirteenth',
+    currentState: 'off' | 'natural' | 'flat' | 'sharp'
+  ): PlaygroundBlock {
+    return {
+      id: family,
+      label: family,
+      note: 'D',
+      voicingRole: family,
+      cssRole: family,
+      enabled: currentState !== 'off',
+      isExtension: true,
+      extensionFamily: family,
+      currentState,
+      variants: [],
+      variantKey: currentState !== 'off' ? (currentState as any) : 'natural',
+    };
+  }
+
+  it('should cycle 9th through: off → natural → flat → sharp → off', () => {
+    const block1 = createExtensionBlock('ninth', 'off');
+    const step1 = getNextVariantKey(block1);
+    expect(step1.nextEnabled).toBe(true);
+    expect(step1.nextKey).toBe('natural');
+    
+    const block2 = createExtensionBlock('ninth', 'natural');
+    const step2 = getNextVariantKey(block2);
+    expect(step2.nextEnabled).toBe(true);
+    expect(step2.nextKey).toBe('flat');
+    
+    const block3 = createExtensionBlock('ninth', 'flat');
+    const step3 = getNextVariantKey(block3);
+    expect(step3.nextEnabled).toBe(true);
+    expect(step3.nextKey).toBe('sharp');
+    
+    const block4 = createExtensionBlock('ninth', 'sharp');
+    const step4 = getNextVariantKey(block4);
+    expect(step4.nextEnabled).toBe(false);
+    // When cycling to 'off', nextKey preserves the last variant
+    expect(step4.nextKey).toBeTruthy();
+  });
+
+  it('should cycle 11th through: off → natural → sharp → off', () => {
+    const block1 = createExtensionBlock('eleventh', 'off');
+    const step1 = getNextVariantKey(block1);
+    expect(step1.nextEnabled).toBe(true);
+    expect(step1.nextKey).toBe('natural');
+    
+    const block2 = createExtensionBlock('eleventh', 'natural');
+    const step2 = getNextVariantKey(block2);
+    expect(step2.nextEnabled).toBe(true);
+    expect(step2.nextKey).toBe('sharp');
+    
+    const block3 = createExtensionBlock('eleventh', 'sharp');
+    const step3 = getNextVariantKey(block3);
+    expect(step3.nextEnabled).toBe(false);
+  });
+
+  it('should cycle 13th through: off → natural → flat → off', () => {
+    const block1 = createExtensionBlock('thirteenth', 'off');
+    const step1 = getNextVariantKey(block1);
+    expect(step1.nextEnabled).toBe(true);
+    expect(step1.nextKey).toBe('natural');
+    
+    const block2 = createExtensionBlock('thirteenth', 'natural');
+    const step2 = getNextVariantKey(block2);
+    expect(step2.nextEnabled).toBe(true);
+    expect(step2.nextKey).toBe('flat');
+    
+    const block3 = createExtensionBlock('thirteenth', 'flat');
+    const step3 = getNextVariantKey(block3);
+    expect(step3.nextEnabled).toBe(false);
+  });
+
+  it('should handle chord tones with simple on/off toggle', () => {
+    const chordTone: PlaygroundBlock = {
+      id: 'root',
+      label: 'R',
+      note: 'C',
+      voicingRole: 'root',
+      cssRole: 'root',
+      enabled: true,
+      isExtension: false,
+    };
+    
+    const result = getNextVariantKey(chordTone);
+    expect(result.nextEnabled).toBe(false);
+    
+    const disabledChordTone = { ...chordTone, enabled: false };
+    const result2 = getNextVariantKey(disabledChordTone);
+    expect(result2.nextEnabled).toBe(true);
   });
 });

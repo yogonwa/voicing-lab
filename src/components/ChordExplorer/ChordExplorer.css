@@ -425,6 +425,62 @@
   text-transform: uppercase;
 }
 
+.playground-voicing {
+  margin-bottom: 20px;
+}
+
+.playground-voicing__title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 4px 0;
+}
+
+.playground-voicing__description {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 12px 0;
+}
+
+.playground-block-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.playground-block__remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  background: rgba(200, 50, 50, 0.9);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+  padding: 0;
+}
+
+.playground-block__remove:hover {
+  background: rgba(255, 50, 50, 1);
+  transform: scale(1.1);
+}
+
+.playground-block__remove:focus-visible {
+  outline: 3px solid rgba(255, 100, 100, 0.8);
+  outline-offset: 2px;
+}
+
 .playground-panel__helper {
   background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;

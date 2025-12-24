@@ -41,6 +41,8 @@ import { PlaygroundPanel } from './PlaygroundPanel';
 import {
   PlaygroundBlock,
   VoicePresetHint,
+  ExtensionVariantKey,
+  EXTENSION_STATE_CYCLES,
   buildPlaygroundBlocks,
   mergePlaygroundBlocks,
   getEnabledBlocks,
@@ -79,6 +81,7 @@ interface PlaygroundPreset {
   order: string[];
   disabled?: string[];
   voiceHint?: VoicePresetHint;
+  extensions?: Record<string, ExtensionVariantKey>; // Extension states to apply
 }
 
 const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
@@ -112,6 +115,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     order: ['third', 'fifth', 'seventh', 'ninth'],
     disabled: ['root'],
     voiceHint: 'compact',
+    extensions: { ninth: 'natural' }, // Rootless requires 9th
   },
   {
     id: 'rootless-b',
@@ -120,6 +124,7 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     order: ['seventh', 'ninth', 'third', 'fifth'],
     disabled: ['root'],
     voiceHint: 'compact',
+    extensions: { ninth: 'natural' }, // Rootless requires 9th
   },
   {
     id: 'drop-2',
@@ -127,6 +132,27 @@ const PLAYGROUND_PRESETS: PlaygroundPreset[] = [
     description: 'Drop-second voice',
     order: ['root', 'fifth', 'third', 'seventh'],
     voiceHint: 'spread',
+  },
+  {
+    id: 'shell-a-9',
+    name: 'Shell A+9',
+    description: '1-3-7-9 with ninth',
+    order: ['root', 'third', 'seventh', 'ninth'],
+    disabled: ['fifth'],
+    voiceHint: 'compact',
+    extensions: { ninth: 'natural' },
+  },
+  {
+    id: 'shell-altered',
+    name: 'Shell Altered',
+    description: '1-3-7-♭9-♯11 for V7',
+    order: ['root', 'third', 'seventh'],
+    disabled: ['fifth'],
+    voiceHint: 'compact',
+    extensions: { 
+      ninth: 'flat',
+      eleventh: 'sharp',
+    },
   },
 ];
 
@@ -268,6 +294,13 @@ export function ChordExplorer() {
     [playgroundBlocks]
   );
 
+  // Split blocks into chord tones and extensions
+  const { chordToneBlocks, extensionBlocks } = useMemo(() => {
+    const chord = playgroundBlocks.filter(b => !b.isExtension);
+    const ext = playgroundBlocks.filter(b => b.isExtension);
+    return { chordToneBlocks: chord, extensionBlocks: ext };
+  }, [playgroundBlocks]);
+
   const activePresetHint = useMemo<VoicePresetHint | undefined>(() => {
     if (!activePresetId) return undefined;
     return PLAYGROUND_PRESETS.find((preset) => preset.id === activePresetId)?.voiceHint;
@@ -339,42 +372,61 @@ export function ChordExplorer() {
     setPlaygroundWarning(null);
     setPlaygroundBlocks(nextBlocks);
   }, []);
-  const handlePlaygroundToggle = useCallback((blockId: string) => {
-    setActivePresetId(null);
+  // Cycle through block states (selector area)
+  const handleBlockCycle = useCallback((blockId: string) => {
     setPlaygroundBlocks((prev) => {
       const index = prev.findIndex((block) => block.id === blockId);
       if (index === -1) return prev;
 
       const target = prev[index];
+      const { nextKey, nextEnabled } = getNextVariantKey(target);
+      
       const next = [...prev];
-
-      if (target.variants && target.variants.length > 0) {
-        const { nextKey, nextEnabled } = getNextVariantKey(target);
-        if (target.enabled && !nextEnabled) {
-          const enabledCount = prev.filter((block) => block.enabled).length;
-          if (enabledCount <= MIN_ENABLED_BLOCKS) {
-            setPlaygroundWarning('At least 2 notes required');
-            return prev;
-          }
-        }
-        setPlaygroundWarning(null);
-        next[index] = updateBlockVariant(target, nextKey, nextEnabled);
-        return next;
+      let updated = updateBlockVariant(target, nextKey, nextEnabled);
+      
+      // Update currentState for extensions
+      if (target.isExtension && target.extensionFamily) {
+        const cycle = EXTENSION_STATE_CYCLES[target.extensionFamily];
+        const currentIndex = cycle.indexOf((target.currentState as any) || 'off');
+        const nextIndex = (currentIndex + 1) % cycle.length;
+        updated.currentState = cycle[nextIndex] as any;
       }
+      
+      next[index] = updated;
+      return next;
+    });
+    
+    setActivePresetId(null);
+    setPlaygroundWarning(null);
+  }, []);
 
+  // Remove block from drag area (sets to 'off' state)
+  const handleBlockRemove = useCallback((blockId: string) => {
+    setPlaygroundBlocks((prev) => {
       const enabledCount = prev.filter((block) => block.enabled).length;
-      if (target.enabled && enabledCount <= MIN_ENABLED_BLOCKS) {
+      if (enabledCount <= MIN_ENABLED_BLOCKS) {
         setPlaygroundWarning('At least 2 notes required');
         return prev;
       }
 
-      setPlaygroundWarning(null);
+      const index = prev.findIndex((block) => block.id === blockId);
+      if (index === -1) return prev;
+
+      const next = [...prev];
+      const target = next[index];
+      
+      // Set to 'off' state
       next[index] = {
         ...target,
-        enabled: !target.enabled,
+        enabled: false,
+        currentState: target.isExtension ? 'off' : target.currentState,
       };
+      
+      setPlaygroundWarning(null);
       return next;
     });
+    
+    setActivePresetId(null);
   }, []);
 
   const handlePresetApply = useCallback((presetId: string) => {
@@ -398,11 +450,36 @@ export function ChordExplorer() {
       const disabledSet = new Set(preset.disabled ?? []);
 
       return ordered.map((block) => {
+        let updated = { ...block };
         const isOrdered = preset.order.includes(block.id);
         const shouldDisable = disabledSet.has(block.id);
-        const nextEnabled = shouldDisable ? false : isOrdered ? true : block.enabled;
-        const targetVariant = isOrdered && block.variants ? 'natural' : block.variantKey;
-        return updateBlockVariant(block, targetVariant, nextEnabled);
+        
+        // Handle chord tones
+        if (!block.isExtension) {
+          const nextEnabled = shouldDisable ? false : isOrdered ? true : block.enabled;
+          const targetVariant = isOrdered && block.variants ? 'natural' : block.variantKey;
+          updated = updateBlockVariant(updated, targetVariant, nextEnabled);
+        }
+        
+        // Handle extensions
+        if (block.isExtension && block.extensionFamily && preset.extensions) {
+          const extensionState = preset.extensions[block.id];
+          if (extensionState) {
+            // Extension is specified in preset - enable with that variant
+            updated = updateBlockVariant(updated, extensionState, true);
+            updated.currentState = extensionState;
+          } else {
+            // Extension not in preset - set to off
+            updated.enabled = false;
+            updated.currentState = 'off';
+          }
+        } else if (block.isExtension && !preset.extensions) {
+          // No extensions config - turn off all extensions
+          updated.enabled = false;
+          updated.currentState = 'off';
+        }
+        
+        return updated;
       });
     });
 
@@ -618,14 +695,17 @@ export function ChordExplorer() {
           />
         ) : (
           <PlaygroundPanel
-            blocks={playgroundBlocks}
+            allBlocks={playgroundBlocks}
+            enabledBlocks={enabledPlaygroundBlocks}
+            onBlockCycle={handleBlockCycle}
+            onBlockRemove={handleBlockRemove}
             onReorder={handlePlaygroundReorder}
-            onToggle={handlePlaygroundToggle}
             warningMessage={warningMessage}
             presets={PLAYGROUND_PRESETS}
             activePresetId={activePresetId}
             onPresetSelect={handlePresetApply}
             onPresetReset={handlePresetReset}
+            quality={selectedQuality}
           />
         )}
 
