@@ -7,38 +7,36 @@ This roadmap tracks feature development status. Feature numbers (F1.1, F2.1, etc
 
 ---
 
-## Now (Dec 2025 - Jan 2026) 🚧
+## Now (Dec 2025 - Jan 2026) ✅
 
-Currently building **Phase 4: Playground Mode v2** - Adding hand mode context and inversions.
+**Phase 4: Playground Mode v2** - Simplified to focus on voicing construction. Enharmonic display implemented.
 
 ### F4: Playground Mode v2
 
-- [x] **F4.1** - Hand Mode Toggle (Single | Two) ✅
-  - Add toggle button in Playground UI
-  - Filter presets based on hand mode
-  - Update voicing logic per mode
+- [ ] **F4.1** - Hand Mode Toggle (Single | Two) ⏸️ DEFERRED
+  - Removed from Playground Mode
+  - Will be introduced in later phases where functionally necessary
 
-- [x] **F4.2** - Single-Hand Presets (Triads + 7th Inversions) ✅
-  - Triad (1-3-5)
-  - Triad 1st Inversion (3-5-1)
-  - Triad 2nd Inversion (5-1-3)
-  - 7th Close Position (1-3-5-7)
-  - 7th 1st Inversion (3-5-7-1)
-  - 7th 2nd Inversion (5-7-1-3)
-  - 7th 3rd Inversion (7-1-3-5)
-  - All in close position within single octave
+- [ ] **F4.2** - Single-Hand Presets (Triads + 7th Inversions) ⏸️ DEFERRED
+  - Removed from Playground Mode
+  - Practice mode feature for future phase
 
-- [ ] **F4.3** - Two-Hand Divider (Fixed, Snap-to-Block)
-  - Visual divider line between LH/RH blocks
-  - Snap to block boundaries
-  - Hand-aware octave placement
+- [ ] **F4.3** - Two-Hand Divider (Fixed, Snap-to-Block) ⏸️ DEFERRED
+  - Removed from Playground Mode
+  - Will be introduced with Melody-on-Top or Practice Mode
 
-- [ ] **F4.4** - Enharmonic Chord Symbol Display
+- [x] **F4.4** - Enharmonic Chord Symbol Display ✅
   - Display Bb instead of A# in chord symbols
   - Keep internal representation sharps-only
-  - Update `buildChordSymbol()` function
+  - COMPLETED December 2025
 
-**Estimated Completion:** Mid-January 2026
+**Phase 4 Update (December 2025):**
+Hand context features (F4.1-F4.3) have been removed from Playground Mode to simplify the learning experience. Playground now focuses purely on voicing construction (which notes, what order). Hand assignment will be introduced in later phases where it's functionally necessary:
+- Decision Tree: Passive color zones (Phase 7)
+- Melody-on-Top: Automatic split based on 1-octave rule (Phase 8)
+- Practice Mode: Explicit hand positions + fingering (Phase 9+)
+
+**Status:** Simplified December 2025 ✅
 
 ---
 
@@ -273,7 +271,7 @@ Completed: December 2025
 | Phase 1 | F1.1-F1.4 (Foundation) | Completed | ✅ |
 | Phase 2 | F2.1-F2.4 (Template Mode) | Completed | ✅ |
 | Phase 3 | F3.1-F3.6 (Playground v1) | Completed | ✅ |
-| **Phase 4** | **F4.1-F4.4 (Playground v2)** | **Dec 2025 - Jan 2026** | **🚧 In Progress** |
+| Phase 4 | F4.1-F4.4 (Playground v2) | Completed | ✅ |
 | Phase 5 | F5.1-F5.3 (Extensions) | Jan-Feb 2026 | 📋 Planned |
 | Phase 6 | F6.1-F6.4 (Recognition) | Jan-Feb 2026 | 📋 Planned |
 | Phase 7 | F7.1-F7.5 (Decision Tree) | Feb-Apr 2026 | 📅 Later |
@@ -302,9 +300,8 @@ Completed: December 2025
 ## Success Metrics
 
 ### Phase 4 Success
-- [x] Users can practice triad inversions in single-hand mode ✅
-- [ ] Two-hand divider clearly shows LH/RH split
-- [ ] Chord symbols display with correct enharmonic spelling
+- [x] Chord symbols display with correct enharmonic spelling ✅
+- [x] Hand features deferred to appropriate future phases ✅
 
 ### Phase 5 Success
 - [ ] Extensions integrate seamlessly with existing presets

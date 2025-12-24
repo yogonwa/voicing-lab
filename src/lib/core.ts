@@ -85,6 +85,7 @@ export {
   createEmptyExtensions,
   getActiveExtensionKeys,
   buildChordSymbol,
+  getDisplayChordSymbol,
   type ExtensionKey,
   type SelectedExtensions,
   type ExtensionOption,

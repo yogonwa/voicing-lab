@@ -10,6 +10,7 @@ import {
   createEmptyExtensions,
   getActiveExtensionKeys,
   buildChordSymbol,
+  getDisplayChordSymbol,
   type ExtensionKey,
   type SelectedExtensions,
 } from './extensionConfig';
@@ -205,6 +206,64 @@ describe('extensionConfig', () => {
     it('handles dim7 with extensions', () => {
       const symbol = buildChordSymbol('B', 'dim7', { ninth: true });
       expect(symbol).toBe('B°7(9)');
+    });
+  });
+
+  describe('getDisplayChordSymbol', () => {
+    it('converts A# to Bb', () => {
+      const symbol = getDisplayChordSymbol('A#', 'dom7', {});
+      expect(symbol).toBe('Bb7');
+    });
+
+    it('converts D# to Eb', () => {
+      const symbol = getDisplayChordSymbol('D#', 'min7', {});
+      expect(symbol).toBe('Ebm7');
+    });
+
+    it('converts G# to Ab', () => {
+      const symbol = getDisplayChordSymbol('G#', 'maj7', {});
+      expect(symbol).toBe('Abmaj7');
+    });
+
+    it('keeps F# as F#', () => {
+      const symbol = getDisplayChordSymbol('F#', 'min7b5', {});
+      expect(symbol).toBe('F#m7♭5');
+    });
+
+    it('keeps C# as C#', () => {
+      const symbol = getDisplayChordSymbol('C#', 'dim7', {});
+      expect(symbol).toBe('C#°7');
+    });
+
+    it('handles extensions with flat-preferred roots', () => {
+      const symbol = getDisplayChordSymbol('A#', 'dom7', {
+        ninth: true,
+        sharpEleventh: true,
+      });
+      expect(symbol).toBe('Bb11(♯11)');
+    });
+
+    it('handles D# with thirteenth', () => {
+      const symbol = getDisplayChordSymbol('D#', 'min7', {
+        ninth: true,
+        eleventh: true,
+        thirteenth: true,
+      });
+      expect(symbol).toBe('Ebm13');
+    });
+
+    it('handles G# with alterations', () => {
+      const symbol = getDisplayChordSymbol('G#', 'dom7', {
+        flatNinth: true,
+        sharpEleventh: true,
+        thirteenth: true,
+      });
+      expect(symbol).toBe('Ab13(♯11,♭9)');
+    });
+
+    it('keeps natural notes unchanged', () => {
+      const symbol = getDisplayChordSymbol('C', 'maj7', {});
+      expect(symbol).toBe('Cmaj7');
     });
   });
 });

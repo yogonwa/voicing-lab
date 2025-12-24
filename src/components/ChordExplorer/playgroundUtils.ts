@@ -4,13 +4,6 @@ import type { Note, VoicingRole } from '../../lib/voicingTemplates';
 import { getNoteChroma, parseNote, toMidi } from '../../lib/core';
 
 /**
- * Hand mode for Playground Mode.
- * - 'single': Single-hand mode for learning chord shapes and inversions in close position
- * - 'two': Two-hand mode for comping with spread voicings (LH + RH)
- */
-export type HandMode = 'single' | 'two';
-
-/**
  * Playground block metadata used across the Chord Explorer.
  * Blocks represent each chord tone/extension that can be reordered
  * inside Playground Mode.

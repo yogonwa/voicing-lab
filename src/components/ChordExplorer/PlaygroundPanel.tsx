@@ -23,15 +23,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { PlaygroundBlock, HandMode } from './playgroundUtils';
+import { PlaygroundBlock } from './playgroundUtils';
 
 interface PlaygroundPanelProps {
   blocks: PlaygroundBlock[];
   onReorder: (next: PlaygroundBlock[]) => void;
   onToggle: (blockId: string) => void;
   warningMessage?: string | null;
-  handMode: HandMode;
-  onHandModeChange: (mode: HandMode) => void;
   presets: {
     id: string;
     name: string;
@@ -102,8 +100,6 @@ export function PlaygroundPanel({
   onReorder,
   onToggle,
   warningMessage,
-  handMode,
-  onHandModeChange,
   presets,
   activePresetId,
   onPresetSelect,
@@ -142,30 +138,8 @@ export function PlaygroundPanel({
         <span className="playground-panel__status-badge">Live</span>
       </div>
 
-      <div className="hand-mode-toggle">
-        <span className="hand-mode-toggle__label">Hand Mode</span>
-        <div className="hand-mode-toggle__buttons" role="group" aria-label="Hand mode toggle">
-          <button
-            type="button"
-            className={`hand-mode-toggle__button ${handMode === 'single' ? 'is-active' : ''}`}
-            onClick={() => onHandModeChange('single')}
-          >
-            Single Hand
-          </button>
-          <button
-            type="button"
-            className={`hand-mode-toggle__button ${handMode === 'two' ? 'is-active' : ''}`}
-            onClick={() => onHandModeChange('two')}
-          >
-            Two Hands
-          </button>
-        </div>
-      </div>
-
       <p className="playground-panel__description">
-        {handMode === 'single' 
-          ? 'Single-hand mode: Learn chord shapes and inversions in close position. Perfect for practicing triad and 7th chord voicings within one octave.'
-          : 'Arrange blocks from left (lowest note) to right (highest note). Drag blocks with a mouse or touch, or select a block and use the arrow keys. Disabled blocks stay in the list so you can compare against the full template.'}
+        Arrange blocks from left (lowest note) to right (highest note). Drag blocks with a mouse or touch, or select a block and use the arrow keys. Disabled blocks stay in the list so you can compare against the full template.
       </p>
 
       <div className="playground-presets">

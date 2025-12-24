@@ -199,3 +199,45 @@ export function buildChordSymbol(
 
   return `${root}${baseSymbol}${altString}`;
 }
+
+/**
+ * Enharmonic equivalents for sharp note names.
+ * Maps sharp roots to their flat equivalents for display purposes.
+ */
+const ENHARMONIC_MAP: Record<string, string> = {
+  'C#': 'Db',
+  'D#': 'Eb',
+  'F#': 'Gb',
+  'G#': 'Ab',
+  'A#': 'Bb',
+};
+
+/**
+ * Returns display-friendly chord symbol with conventional enharmonic spelling.
+ * Converts sharp roots to flat equivalents for common jazz contexts.
+ * 
+ * Examples:
+ * - A#7 → Bb7
+ * - D#m7 → Ebm7
+ * - G#maj7 → Abmaj7
+ * - F#m7b5 → F#m7♭5 (F# is kept as sharp - common in jazz)
+ * - C#dim7 → C#°7 (C# is kept as sharp - common in jazz)
+ */
+export function getDisplayChordSymbol(
+  root: string,
+  quality: ChordQuality,
+  selected: SelectedExtensions
+): string {
+  const baseSymbol = buildChordSymbol(root, quality, selected);
+  
+  // Flat-preferred roots in jazz context
+  // F# and C# are kept as sharps (common in jazz: F#m7b5, C#dim7)
+  const flatPreferred = ['A#', 'D#', 'G#'];
+  
+  if (flatPreferred.includes(root)) {
+    const displayRoot = ENHARMONIC_MAP[root];
+    return baseSymbol.replace(root, displayRoot);
+  }
+  
+  return baseSymbol;
+}
