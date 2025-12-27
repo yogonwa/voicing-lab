@@ -104,6 +104,39 @@ export {
   parseNote,
   getNoteChroma,
   toMidi,
+  formatVoicingRole,
 } from './noteUtils';
+
+// Music theory constants
+export {
+  INTERVALS,
+  MIDI_NOTES,
+  VOICING_LIMITS,
+  BASS_REGISTER,
+} from './musicConstants';
+
+// Voicing analysis (warnings and quality checks)
+export {
+  analyzeVoicing,
+  checkMinimumBlocks,
+  type VoicingWarning,
+} from './voicingAnalysis';
+
+// Pattern recognition
+export {
+  detectVoicingPattern,
+  getPatternDescription,
+  getPatternsByCategory as getPatternsByCategoryRecognition,
+  type DetectedPattern,
+} from './voicingRecognition';
+
+// Pattern library
+export {
+  VOICING_PATTERNS,
+  getAllPatternIds,
+  getPatternById,
+  getPatternsByCategory as getPatternsByCategoryLibrary,
+  type VoicingPattern,
+} from './patterns';
 
 

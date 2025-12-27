@@ -6,7 +6,7 @@
  */
 
 import { CHROMATIC_SCALE, type NoteName } from './chordCalculator';
-import type { Note } from './voicingTemplates';
+import type { Note, VoicingRole } from './voicingTemplates';
 
 const NOTE_TO_CHROMA: Record<NoteName, number> = CHROMATIC_SCALE.reduce((acc, note, index) => {
   acc[note] = index;
@@ -42,4 +42,33 @@ export function toMidi(note: Note): number {
   return (octave + 1) * 12 + getNoteChroma(name);
 }
 
+/**
+ * Format a voicing role for human-readable display.
+ * Used in pattern recognition, warnings, and educational feedback.
+ * 
+ * @param role - The voicing role to format
+ * @returns Formatted string with musical symbols (e.g., '♭9', '♯11')
+ * 
+ * @example
+ * formatVoicingRole('flatNinth') // => '♭9'
+ * formatVoicingRole('sharpEleventh') // => '♯11'
+ * formatVoicingRole('third') // => '3rd'
+ */
+export function formatVoicingRole(role: VoicingRole): string {
+  const ROLE_DISPLAY_MAP: Record<VoicingRole, string> = {
+    root: 'root',
+    third: '3rd',
+    fifth: '5th',
+    seventh: '7th',
+    ninth: '9th',
+    flatNinth: '♭9',
+    sharpNinth: '♯9',
+    eleventh: '11th',
+    sharpEleventh: '♯11',
+    thirteenth: '13th',
+    flatThirteenth: '♭13',
+  } as const;
+
+  return ROLE_DISPLAY_MAP[role] ?? role;
+}
 

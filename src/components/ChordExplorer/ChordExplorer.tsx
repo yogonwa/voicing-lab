@@ -38,6 +38,8 @@ import { PianoKeyboard, type ActiveNote } from '../PianoKeyboard';
 import { ExtensionPanel } from './ExtensionPanel';
 import { NoteBlocks } from './NoteBlocks';
 import { PlaygroundPanel } from './PlaygroundPanel';
+import { HelpToggle } from '../HelpToggle';
+import { FeedbackArea } from '../FeedbackArea';
 import {
   PlaygroundBlock,
   VoicePresetHint,
@@ -51,6 +53,12 @@ import {
   voicePlaygroundBlocks,
   getRootWarning,
 } from './playgroundUtils';
+import {
+  analyzeVoicing,
+  detectVoicingPattern,
+  type VoicingWarning,
+  type DetectedPattern,
+} from '../../lib/core';
 
 // ============================================
 // TYPES
@@ -258,6 +266,10 @@ export function ChordExplorer() {
   const [playgroundWarning, setPlaygroundWarning] = useState<string | null>(null);
   const [activePresetId, setActivePresetId] = useState<string | null>(null);
 
+  // Pattern recognition and warnings state
+  const [detectedPattern, setDetectedPattern] = useState<DetectedPattern | null>(null);
+  const [voicingWarnings, setVoicingWarnings] = useState<VoicingWarning[]>([]);
+
   // Audio state
   const [audioReady, setAudioReady] = useState(isAudioReady());
   const [loading, setLoading] = useState(false);
@@ -359,6 +371,31 @@ export function ChordExplorer() {
 
   const rootWarning = useMemo(() => getRootWarning(playgroundBlocks), [playgroundBlocks]);
   const warningMessage = playgroundWarning ?? rootWarning;
+
+  // Debounced pattern detection and voicing analysis (300ms delay)
+  useEffect(() => {
+    if (mode !== 'playground') {
+      setDetectedPattern(null);
+      setVoicingWarnings([]);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      // Detect pattern
+      const pattern = detectVoicingPattern(playgroundBlocks);
+      setDetectedPattern(pattern);
+
+      // Analyze voicing quality
+      const warnings = analyzeVoicing(
+        playgroundBlocks,
+        voicedPlaygroundNotes,
+        selectedQuality
+      );
+      setVoicingWarnings(warnings);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [mode, playgroundBlocks, voicedPlaygroundNotes, selectedQuality]);
 
   /**
    * Switch modes between Template and Playground
@@ -612,6 +649,35 @@ export function ChordExplorer() {
 
   return (
     <div className="chord-explorer">
+      {/* Sticky Header for Playground Mode */}
+      {mode === 'playground' && (
+        <header className="chord-explorer__sticky-header">
+          <div className="sticky-header__left">
+            <h3 className="sticky-header__title">PLAYGROUND MODE</h3>
+            <span className="sticky-header__subtitle">Build voicings by selecting and reordering notes</span>
+          </div>
+          <div className="sticky-header__right">
+            <HelpToggle />
+            <button
+              className={`arpeggio-toggle ${arpeggioMode ? 'active' : ''}`}
+              onClick={() => setArpeggioMode(!arpeggioMode)}
+              aria-label={arpeggioMode ? 'Switch to block chord' : 'Switch to arpeggio'}
+              title={arpeggioMode ? 'Arpeggio mode (notes roll up)' : 'Block mode (all notes together)'}
+            >
+              {arpeggioMode ? '🎵 Roll' : '🎹 Block'}
+            </button>
+            <button
+              className={`play-button ${isPlaying ? 'playing' : ''}`}
+              onClick={handlePlay}
+              disabled={loading || isPlaying}
+              aria-label={`Play ${chordSymbol}`}
+            >
+              {loading ? '...' : isPlaying ? '♪' : '▶ Play'}
+            </button>
+          </div>
+        </header>
+      )}
+
       {/* Controls Section */}
       <section className="explorer-controls">
         <h3 className="section-title">Chord Explorer</h3>
@@ -649,18 +715,10 @@ export function ChordExplorer() {
             />
           </div>
         ) : (
-          <>
-            <div className="selector-card">
-              <h4 className="selector-card__title">Chord</h4>
-              {chordSelectorInputs}
-            </div>
-            <div className="playground-callout">
-              <p>
-                Playground Mode lets you drag note blocks to experiment with voicing order. Reordering is
-                live for audio + keyboard, so play the chord or arpeggio to hear every variation instantly.
-              </p>
-            </div>
-          </>
+          <div className="selector-card">
+            <h4 className="selector-card__title">Chord</h4>
+            {chordSelectorInputs}
+          </div>
         )}
       </section>
 
@@ -668,24 +726,26 @@ export function ChordExplorer() {
       <section className="explorer-display">
         <header className="display-header">
           <h2 className="chord-symbol">{chordSymbol}</h2>
-          <div className="playback-controls">
-            <button
-              className={`arpeggio-toggle ${arpeggioMode ? 'active' : ''}`}
-              onClick={() => setArpeggioMode(!arpeggioMode)}
-              aria-label={arpeggioMode ? 'Switch to block chord' : 'Switch to arpeggio'}
-              title={arpeggioMode ? 'Arpeggio mode (notes roll up)' : 'Block mode (all notes together)'}
-            >
-              {arpeggioMode ? '🎵 Roll' : '🎹 Block'}
-            </button>
-            <button
-              className={`play-button ${isPlaying ? 'playing' : ''}`}
-              onClick={handlePlay}
-              disabled={loading || isPlaying}
-              aria-label={`Play ${chordSymbol}`}
-            >
-              {loading ? '...' : isPlaying ? '♪' : '▶ Play'}
-            </button>
-          </div>
+          {mode === 'template' && (
+            <div className="playback-controls">
+              <button
+                className={`arpeggio-toggle ${arpeggioMode ? 'active' : ''}`}
+                onClick={() => setArpeggioMode(!arpeggioMode)}
+                aria-label={arpeggioMode ? 'Switch to block chord' : 'Switch to arpeggio'}
+                title={arpeggioMode ? 'Arpeggio mode (notes roll up)' : 'Block mode (all notes together)'}
+              >
+                {arpeggioMode ? '🎵 Roll' : '🎹 Block'}
+              </button>
+              <button
+                className={`play-button ${isPlaying ? 'playing' : ''}`}
+                onClick={handlePlay}
+                disabled={loading || isPlaying}
+                aria-label={`Play ${chordSymbol}`}
+              >
+                {loading ? '...' : isPlaying ? '♪' : '▶ Play'}
+              </button>
+            </div>
+          )}
         </header>
 
         {mode === 'template' ? (
@@ -717,15 +777,12 @@ export function ChordExplorer() {
           />
         </div>
 
-        {activeTips.length > 0 && (
-          <div className="tips-section">
-            {activeTips.map(({ key, tip }) => (
-              <p key={key} className="tip">
-                💡 <strong>{key}:</strong> {tip}
-              </p>
-            ))}
-          </div>
-        )}
+        {/* Unified Feedback Area (replaces tips section) */}
+        <FeedbackArea
+          detectedPattern={mode === 'playground' ? detectedPattern : null}
+          warnings={mode === 'playground' ? voicingWarnings : []}
+          extensionTips={activeTips}
+        />
       </section>
     </div>
   );

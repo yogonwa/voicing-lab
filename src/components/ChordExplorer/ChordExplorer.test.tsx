@@ -6,8 +6,8 @@ import { ChordExplorer } from './ChordExplorer';
 jest.mock('../../lib/audio');
 
 function getPlaygroundPanel(): HTMLElement {
-  const header = screen.getByText('Playground Mode');
-  const panel = header.closest('.playground-panel');
+  // Find by preset buttons or notes section instead of removed header
+  const panel = document.querySelector('.playground-panel');
   if (!panel || !(panel instanceof HTMLElement)) {
     throw new Error('Expected PlaygroundPanel container to exist');
   }
@@ -22,7 +22,7 @@ describe('ChordExplorer (Playground Mode)', () => {
     expect(screen.getByText('Extensions')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /playground/i }));
-    expect(await screen.findByText('Playground Mode')).toBeInTheDocument();
+    expect(await screen.findByText('PLAYGROUND MODE')).toBeInTheDocument(); // Updated to match new header
 
     fireEvent.click(screen.getByRole('button', { name: /template/i }));
     expect(screen.getByText('Extensions')).toBeInTheDocument();

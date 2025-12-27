@@ -11,4 +11,6 @@ export {
   getActiveNotes,
 } from './PianoKeyboard';
 export type { ActiveNote, PianoKeyboardProps } from './PianoKeyboard';
+export { HelpToggle } from './HelpToggle';
+export { FeedbackArea, PatternCard, WarningCard } from './FeedbackArea';
 

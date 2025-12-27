@@ -149,19 +149,9 @@ export function PlaygroundPanel({
 
   return (
     <div className="playground-panel">
-      <div className="playground-panel__header">
-        <div>
-          <p className="playground-panel__eyebrow">Playground Mode</p>
-          <h4 className="playground-panel__title">Select notes • Drag to reorder</h4>
-        </div>
-        <span className="playground-panel__status-badge">Live</span>
-      </div>
-
-      <p className="playground-panel__description">
-        Choose which notes to use, then drag to arrange from left (lowest) to right (highest). Click × to remove notes from the voicing.
-      </p>
-
+      {/* Presets */}
       <div className="playground-presets">
+        <span className="presets-label">PRESETS</span>
         {presets.map((preset) => (
           <button
             key={preset.id}
@@ -182,16 +172,14 @@ export function PlaygroundPanel({
         </button>
       </div>
 
-      {/* SELECTOR AREA - All notes */}
-      <NoteSelector blocks={allBlocks} onBlockCycle={onBlockCycle} />
-
-      {/* DRAG AREA - Enabled notes only */}
-      <div className="playground-voicing">
-        <h4 className="playground-voicing__title">Voicing Order</h4>
-        <p className="playground-voicing__description">
-          Drag to reorder. Click × to remove.
-        </p>
+      {/* NOTES & ORDER - Unified Section */}
+      <div className="playground-notes-section">
+        <h4 className="playground-section-title">NOTES & ORDER</h4>
         
+        {/* SELECTOR AREA - All notes */}
+        <NoteSelector blocks={allBlocks} onBlockCycle={onBlockCycle} />
+
+        {/* DRAG AREA - Enabled notes only */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -207,16 +195,9 @@ export function PlaygroundPanel({
         </DndContext>
 
         <div className="playground-panel__axis">
-          <span aria-hidden="true">◀ Lower</span>
-          <span aria-hidden="true">Higher ▶</span>
+          <span aria-hidden="true">◀ LOWER</span>
+          <span aria-hidden="true">HIGHER ▶</span>
         </div>
-      </div>
-
-      <div className="playground-panel__helper">
-        <p>
-          Select notes above to add them to your voicing. Drag blocks to experiment with different orders. 
-          Play the chord or arpeggio to hear each variation instantly on the keyboard.
-        </p>
       </div>
 
       {warningMessage && (

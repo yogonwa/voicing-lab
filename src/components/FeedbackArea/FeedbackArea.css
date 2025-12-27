@@ -1,0 +1,312 @@
+/**
+ * FeedbackArea Styles
+ * 
+ * Unified feedback display with cards for patterns, warnings, and tips.
+ * Dark theme integration with smooth animations.
+ */
+
+.feedback-area {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.feedback-area__empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.feedback-area__empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.feedback-area__empty-title {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.feedback-area__empty-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ============================================
+   FEEDBACK CARD (Base)
+   ============================================ */
+
+.feedback-card {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid;
+  padding: 14px 16px;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   PATTERN CARD
+   ============================================ */
+
+.pattern-card {
+  border-left-color: #63b3ed;
+}
+
+.pattern-card__header {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.pattern-card__header:hover {
+  opacity: 0.9;
+}
+
+.pattern-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pattern-card__icon {
+  font-size: 1.2rem;
+}
+
+.pattern-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  flex: 1;
+}
+
+.pattern-card__badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pattern-card__teaser {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-style: italic;
+}
+
+.pattern-card__expand-icon {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pattern-card__content {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: expandIn 0.2s ease;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.pattern-card__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pattern-card__section-title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.pattern-card__section p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pattern-card__caution {
+  background: rgba(246, 173, 85, 0.15);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #f6ad55;
+  line-height: 1.4;
+}
+
+.pattern-card__extra {
+  background: rgba(99, 179, 237, 0.15);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  color: #63b3ed;
+}
+
+/* ============================================
+   WARNING CARD
+   ============================================ */
+
+.warning-card {
+  border-left-color: #f6ad55;
+}
+
+.warning-card--error {
+  border-left-color: #fc8181;
+}
+
+.warning-card--warning {
+  border-left-color: #f6ad55;
+}
+
+.warning-card--suggestion {
+  border-left-color: #63b3ed;
+}
+
+.warning-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.warning-card__icon {
+  font-size: 1.2rem;
+}
+
+.warning-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.warning-card__explanation {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.warning-card__suggestion {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.warning-card__suggestion strong {
+  color: rgba(255, 255, 255, 1);
+}
+
+/* ============================================
+   TIP CARD
+   ============================================ */
+
+.tip-card {
+  border-left-color: #68d391;
+}
+
+.tip-card__title {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tip-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-card__item {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tip-card__item strong {
+  color: #68d391;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 600px) {
+  .feedback-area {
+    padding: 12px;
+  }
+
+  .feedback-card {
+    padding: 12px;
+  }
+
+  .pattern-card__title {
+    font-size: 0.95rem;
+  }
+
+  .pattern-card__teaser {
+    font-size: 0.85rem;
+  }
+}
+
