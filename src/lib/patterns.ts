@@ -20,6 +20,7 @@ export interface VoicingPattern {
   caution?: string;
   recommendedFor?: ChordFunction[];
   soundCharacter?: string;
+  relatedPatterns?: string[]; // IDs of related patterns for "See also" section
 }
 
 /**
@@ -41,6 +42,7 @@ export const VOICING_PATTERNS: VoicingPattern[] = [
     soundCharacter: 'Clean and focused',
     recommendedFor: ['ii', 'V', 'I'],
     caution: 'Sounds sparse alone - usually paired with extensions or melody.',
+    relatedPatterns: ['shell-b', 'shell-a-9'],
   },
   {
     id: 'shell-b',
@@ -53,6 +55,7 @@ export const VOICING_PATTERNS: VoicingPattern[] = [
     commonUse: 'Alternates with Shell A for stepwise voice leading through progressions.',
     soundCharacter: 'Clean and focused',
     recommendedFor: ['ii', 'V', 'I'],
+    relatedPatterns: ['shell-a', 'shell-a-9'],
   },
   {
     id: 'shell-a-9',
@@ -65,6 +68,7 @@ export const VOICING_PATTERNS: VoicingPattern[] = [
     commonUse: 'Comping with more harmonic richness than basic shells.',
     soundCharacter: 'Warm and full',
     recommendedFor: ['ii', 'V', 'I'],
+    relatedPatterns: ['shell-a', 'shell-altered'],
   },
   {
     id: 'shell-altered',
@@ -94,6 +98,7 @@ export const VOICING_PATTERNS: VoicingPattern[] = [
     commonUse: 'Standard in jazz combo settings. Right hand voicing when left hand walks bass.',
     soundCharacter: 'Rich and modern',
     recommendedFor: ['ii', 'V', 'I'],
+    relatedPatterns: ['rootless-b', 'rootless-a-6'],
   },
   {
     id: 'rootless-b',
@@ -106,6 +111,7 @@ export const VOICING_PATTERNS: VoicingPattern[] = [
     commonUse: 'Alternates with Rootless A for stepwise motion in progressions.',
     soundCharacter: 'Rich and modern',
     recommendedFor: ['ii', 'V', 'I'],
+    relatedPatterns: ['rootless-a', 'rootless-b-6'],
   },
   {
     id: 'rootless-a-6',

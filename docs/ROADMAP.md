@@ -1,7 +1,7 @@
 # Voicing Lab Roadmap
 
-**Last Updated:** December 2025  
-**Current Focus:** Phase 4 - Playground Mode v2
+**Last Updated:** January 2026
+**Current Focus:** Phase 7 - Decision Tree Navigator
 
 This roadmap tracks feature development status. Feature numbers (F1.1, F2.1, etc.) match the specifications in [DESIGN_DOC.md](DESIGN_DOC.md).
 
@@ -40,39 +40,43 @@ Hand context features (F4.1-F4.3) have been removed from Playground Mode to simp
 
 ---
 
-## Next (Jan - Feb 2026) 📋
+## Now (Jan 2026) ✅
 
-After completing extensions, focus shifts to intelligent pattern recognition to help users discover jazz vocabulary.
+Pattern recognition is now complete, enabling discovery-based learning of jazz vocabulary.
 
-### F6: Context-Aware Recognition
+### F6: Context-Aware Recognition ✅
 
-- [ ] **F6.1** - Voicing Pattern Detection Algorithm
-  - `detectVoicingPattern()` function
-  - Pattern matching against known voicing library
-  - Real-time detection as user drags blocks
+- [x] **F6.1** - Voicing Pattern Detection Algorithm ✅
+  - `detectVoicingPattern()` function implemented
+  - Pattern matching against known voicing library (31 patterns)
+  - Real-time detection as user drags blocks (300ms debounce)
+  - Fuzzy matching with confidence scoring
 
-- [ ] **F6.2** - Pattern Library (Shell A/B, Drop-2, Rootless, Inversions)
-  - Define recognizable patterns with metadata
-  - Include descriptions, "why it works", common use
-  - Cover: shells, rootless, drop-2, inversions, slash chords
+- [x] **F6.2** - Pattern Browser & Library ✅
+  - 31 recognizable patterns with metadata
+  - Categories: shell, rootless, spread, inversion, slash
+  - Browsable modal UI with "Try It" buttons
+  - Related patterns linking (Shell A ↔ Shell B)
 
-- [ ] **F6.3** - Insight Card UI ("You found a Drop-2!")
-  - Non-intrusive card/tooltip
-  - Shows pattern name + explanation
-  - Dismissible without disrupting workflow
+- [x] **F6.3** - Insight Card UI ("You built a Drop-2!") ✅
+  - PatternCard with celebration animation
+  - Category badges (Shell, Rootless, Spread)
+  - Chord function badges (ii, V, I)
+  - Expandable educational content
 
-- [ ] **F6.4** - Educational Explanations & Tips
-  - Context-sensitive learning content
-  - "Why this works" explanations
+- [x] **F6.4** - Educational Explanations & Tips ✅
+  - "Why It Works" callout with explanations
+  - Context-sensitive fuzzy match suggestions
   - "When to use" recommendations
+  - Related patterns for further exploration
 
 **Value:** HIGH - Connects user exploration to jazz vocabulary. Discovery-based learning is more engaging than lecture.
 
-**Estimated Duration:** 1 week
+**Completed:** January 2026 ✅
 
 ---
 
-## Later (Feb - Apr 2026) 📅
+## Next (Feb - Apr 2026) 📋
 
 The Decision Tree Navigator is the "killer feature" - teaches voice leading through interactive decision-making.
 
@@ -273,6 +277,33 @@ Completed: January 2026 (UI Redesign: December 2024)
 
 ---
 
+### F6: Context-Aware Recognition
+
+Completed: January 2026
+
+- [x] **F6.1** - Voicing Pattern Detection Algorithm
+  - `detectVoicingPattern()` with exact and fuzzy matching
+  - Confidence scoring for fuzzy matches
+  - 300ms debounce for performance
+
+- [x] **F6.2** - Pattern Browser & Library
+  - 31 patterns across 5 categories
+  - PatternBrowser modal with category accordion
+  - "Try It" buttons load patterns into Playground
+  - Related patterns linking
+
+- [x] **F6.3** - Insight Card UI ("You built a Drop-2!")
+  - PatternCard with celebration animation
+  - Category and chord function badges
+  - Expandable educational content
+
+- [x] **F6.4** - Educational Explanations & Tips
+  - "Why It Works" callout boxes
+  - Contextual fuzzy match suggestions
+  - Related patterns section
+
+---
+
 ## Timeline Summary
 
 | Phase | Features | Timeline | Status |
@@ -282,11 +313,11 @@ Completed: January 2026 (UI Redesign: December 2024)
 | Phase 3 | F3.1-F3.6 (Playground v1) | Completed | ✅ |
 | Phase 4 | F4.1-F4.4 (Playground v2) | Completed | ✅ |
 | Phase 5 | F5.1-F5.3 (Extensions) | Completed | ✅ |
-| **Phase 6** | **F6.1-F6.4 (Recognition)** | **Jan-Feb 2026** | **📋 Next** |
-| Phase 7 | F7.1-F7.5 (Decision Tree) | Feb-Apr 2026 | 📅 Later |
+| Phase 6 | F6.1-F6.4 (Recognition) | Completed | ✅ |
+| **Phase 7** | **F7.1-F7.5 (Decision Tree)** | **Feb-Apr 2026** | **📋 Next** |
 | Phase 8 | F8.1-F8.5 (Advanced) | TBD | 💡 Ideas |
 
-**Total Estimated Time to Decision Tree:** 8-10 weeks from now
+**Total Estimated Time to Decision Tree:** 6-8 weeks from now
 
 ---
 
@@ -317,10 +348,10 @@ Completed: January 2026 (UI Redesign: December 2024)
 - [x] Users understand mutual exclusivity of alterations ✅
 - [x] Voicings sound "jazzy" with 9ths ✅
 
-### Phase 6 Success
-- [ ] System recognizes standard voicings as user builds them
-- [ ] Insights provide helpful education without annoyance
-- [ ] Users discover jazz vocabulary organically
+### Phase 6 Success ✅
+- [x] System recognizes standard voicings as user builds them ✅
+- [x] Insights provide helpful education without annoyance ✅
+- [x] Users discover jazz vocabulary organically ✅
 
 ### Phase 7 Success
 - [ ] Users navigate decision tree making informed choices

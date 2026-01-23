@@ -34,8 +34,8 @@ describe('FeedbackArea', () => {
     };
 
     render(<FeedbackArea detectedPattern={pattern} />);
-    
-    expect(screen.getByText('Shell Position A')).toBeInTheDocument();
+
+    expect(screen.getByText('You built a Shell Position A!')).toBeInTheDocument();
     expect(screen.getByText(/Clean and focused/i)).toBeInTheDocument();
   });
 

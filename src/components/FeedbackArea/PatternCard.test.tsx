@@ -22,13 +22,28 @@ describe('PatternCard', () => {
       whyItWorks: 'The 3rd and 7th are essential',
       commonUse: 'Left-hand comping',
       soundCharacter: 'Clean and focused',
+      recommendedFor: ['ii', 'V', 'I'],
     },
   };
 
-  it('renders pattern name', () => {
+  it('renders celebration title for exact match', () => {
     render(<PatternCard pattern={exactPattern} />);
-    
-    expect(screen.getByText('Shell Position A')).toBeInTheDocument();
+
+    expect(screen.getByText('You built a Shell Position A!')).toBeInTheDocument();
+  });
+
+  it('renders category badge', () => {
+    render(<PatternCard pattern={exactPattern} />);
+
+    expect(screen.getByText('Shell')).toBeInTheDocument();
+  });
+
+  it('renders chord function badges', () => {
+    render(<PatternCard pattern={exactPattern} />);
+
+    expect(screen.getByText('ii')).toBeInTheDocument();
+    expect(screen.getByText('V')).toBeInTheDocument();
+    expect(screen.getByText('I')).toBeInTheDocument();
   });
 
   it('renders teaser text', () => {
@@ -86,6 +101,20 @@ describe('PatternCard', () => {
     expect(screen.queryByText(/%/)).not.toBeInTheDocument();
   });
 
+  it('shows fuzzy description with formatted extra notes', () => {
+    const fuzzyPattern: DetectedPattern = {
+      ...exactPattern,
+      matchType: 'fuzzy',
+      confidence: 85,
+      extraNotes: ['fifth', 'ninth'],
+    };
+
+    render(<PatternCard pattern={fuzzyPattern} />);
+
+    // Check for the fuzzy description in collapsed view
+    expect(screen.getByText(/with added 5th, 9th/i)).toBeInTheDocument();
+  });
+
   it('shows extra notes for fuzzy matches when expanded', () => {
     const fuzzyPattern: DetectedPattern = {
       ...exactPattern,
@@ -95,11 +124,13 @@ describe('PatternCard', () => {
     };
 
     render(<PatternCard pattern={fuzzyPattern} />);
-    
+
     const header = screen.getByRole('button');
     fireEvent.click(header);
-    
-    expect(screen.getByText(/Extra notes/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/Extra notes:/i)).toBeInTheDocument();
+    // Now shows contextual suggestion based on pattern type
+    expect(screen.getByText(/Try removing the 5th, 9th for the classic/i)).toBeInTheDocument();
   });
 
   it('shows caution when present', () => {

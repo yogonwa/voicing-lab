@@ -1,8 +1,8 @@
 # Voicing Lab - Design & Implementation Document
 
-**Version:** 3.0  
-**Last Updated:** December 2025  
-**Status:** Phase 4 (Playground Mode v2) in progress
+**Version:** 4.0
+**Last Updated:** January 2026
+**Status:** Phase 6 (Context-Aware Recognition) complete, Phase 7 next
 
 ---
 
@@ -381,80 +381,34 @@ const AVOID_EXTENSIONS: Record<ChordQuality, ExtensionRole[]> = {
 
 ### Phase 4: Playground Mode v2 (In Progress 🚧)
 
-#### F4.1: Hand Mode Toggle (Single | Two) 🚧
+#### F4.1: Hand Mode Toggle (Single | Two) ⏸️ DEFERRED
 **Purpose:** Switch between single-hand (learning shapes) and two-hand (comping) contexts.
 
-**User-Facing:**
-- Toggle button: `Single Hand` | `Two Hands`
-- Default: Two Hands
-- Filters available presets per mode
+**Status:** Removed from Playground Mode - deferred to future phases
 
-**Implementation:**
-```typescript
-type HandMode = 'single' | 'two';
-
-interface PlaygroundPreset {
-  id: string;
-  name: string;
-  handMode: HandMode | 'both';
-  blockOrder: VoicingRole[];
-  dividerIndex?: number; // For two-hand mode
-}
-```
-
-**Files to Modify:**
-- `PlaygroundPanel.tsx` - add toggle UI
-- `playgroundUtils.ts` - `voiceForHandMode()` function
-- Preset definitions with hand mode filter
-
-**Status:** In Progress
+**Rationale:** Hand assignment adds UI complexity without serving core learning goal (discover voicing construction). Hand features deferred to future phases where functionally necessary (Melody-on-Top, Practice Mode).
 
 ---
 
-#### F4.2: Single-Hand Presets (Triads + 7th Inversions) 🚧
+#### F4.2: Single-Hand Presets (Triads + 7th Inversions) ⏸️ DEFERRED
 **Purpose:** Teach close-position shapes for single-hand playing.
 
-**Presets to Add:**
-- Triad (1-3-5)
-- Triad 1st Inversion (3-5-1)
-- Triad 2nd Inversion (5-1-3)
-- 7th Close Position (1-3-5-7)
-- 7th 1st Inversion (3-5-7-1)
-- 7th 2nd Inversion (5-7-1-3)
-- 7th 3rd Inversion (7-1-3-5)
+**Status:** Removed from Playground Mode - deferred to Practice Mode
 
-**Octave Logic:**
-- All notes in close position within single octave (e.g., C4-B4)
-- No octave wrapping (inversions are intentional)
-- Follow existing octave placement rules (see [OctavePlacement.md](OctavePlacement.md))
-
-**Status:** In Progress
+**Rationale:** Triad inversions are better suited for a dedicated Practice Mode with fingering guidance and hand position feedback.
 
 ---
 
-#### F4.3: Two-Hand Divider (Fixed, Snap-to-Block) 🚧
+#### F4.3: Two-Hand Divider (Fixed, Snap-to-Block) ⏸️ DEFERRED
 **Purpose:** Visually separate LH and RH notes in two-hand mode.
 
-**User-Facing:**
-- Fixed vertical line between blocks
-- Snaps to block boundaries (not freely draggable)
-- Notes left of divider = LH
-- Notes right of divider = RH
+**Status:** Removed from Playground Mode - deferred to Melody-on-Top/Practice Mode
 
-**Octave Logic:**
-- LH: lower register (C2-C4 suggested, see OctavePlacement.md)
-- RH: higher register (C4-C6 suggested, see OctavePlacement.md)
-- Muddy bass rules apply more strictly to LH
-
-**Files to Modify:**
-- `PlaygroundPanel.tsx` - divider UI
-- `playgroundUtils.ts` - hand-aware voicing logic
-
-**Status:** In Progress
+**Rationale:** Hand assignment will be introduced where functionally necessary (Melody-on-Top with automatic split, Practice Mode with explicit positions).
 
 ---
 
-#### F4.4: Enharmonic Chord Symbol Display 📋
+#### F4.4: Enharmonic Chord Symbol Display ✅
 **Purpose:** Display conventional flat spellings (Bb, Eb) in chord symbols instead of sharps-only.
 
 **Scope:** Chord symbol display only (e.g., "C7" → "C7" with Bb implied, "A#7" → "Bb7")
@@ -462,43 +416,35 @@ interface PlaygroundPreset {
 **Rationale:** Note blocks keep internal sharp-only representation to avoid confusion when debugging.
 
 **Implementation:**
-```typescript
-const ENHARMONIC_MAP: Record<NoteName, string> = {
-  'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb',
-  'G#': 'Ab', 'A#': 'Bb',
-};
+- Added `getDisplayChordSymbol()` to `extensionConfig.ts`
+- Converts A#, D#, G# to Bb, Eb, Ab
+- Keeps F# and C# as sharps (common in jazz)
 
-function getDisplayChordSymbol(chord: Chord): string {
-  const baseSymbol = buildChordSymbol(chord);
-  const flatPreferred = ['A#', 'D#', 'G#'];
-  if (flatPreferred.includes(chord.root)) {
-    return baseSymbol.replace(chord.root, ENHARMONIC_MAP[chord.root]);
-  }
-  return baseSymbol;
-}
-```
+**Files Modified:**
+- `extensionConfig.ts` - added `getDisplayChordSymbol()`
+- `core.ts` - exported new function
+- `ChordExplorer.tsx` - uses for chord name header
+- `extensionConfig.test.ts` - added tests
 
-**Files to Modify:**
-- `chordCalculator.ts` - add `getDisplayChordSymbol()`
-- `ChordExplorer.tsx` - use for chord name header
-
-**Status:** Planned
+**Status:** Complete (December 2025)
 
 ---
 
-### Phase 5: Extensions in Playground (Planned 📋)
+### Phase 5: Extensions in Playground (Completed ✅)
 
-#### F5.1: Multi-State Extension Blocks (Off → 9 → ♭9 → ♯9) 📋
+#### F5.1: Multi-State Extension Blocks (Off → 9 → ♭9 → ♯9) ✅
 **Purpose:** Allow users to toggle between natural, flat, and sharp extensions.
 
 **Rationale:** User cannot enable 9, ♭9, and ♯9 at same time (they're mutually exclusive). Multi-state block enforces this constraint.
 
-**UI Concept:** Vertical toggle (like Price is Right wheel) that cycles through states.
+**Implementation:** Click-to-cycle interface with state indicator dots.
 
 **States per Extension:**
 - **9th block:** Off → 9 → ♭9 → ♯9 → Off
 - **11th block:** Off → 11 → ♯11 → Off
 - **13th block:** Off → 13 → ♭13 → Off
+
+**Status:** Complete (January 2026)
 
 **Implementation:**
 ```typescript
@@ -520,128 +466,184 @@ interface PlaygroundBlock {
 
 ---
 
-#### F5.2: Extension Blocks UI (Vertical Toggle) 📋
-**Purpose:** Visual design for multi-state extension blocks.
+#### F5.2: Unified Note Selector UI ✅
+**Purpose:** Separate note selection from voicing order experimentation.
 
-**Design:**
-- Block shows current state (9, ♭9, or ♯9)
-- Click cycles through states
-- Vertical indicator shows available states
-- Color coding for alterations (natural = blue, flat = yellow, sharp = red)
+**Implementation:**
+- **Selector Area:** All notes in fixed order (R-3-5-7-9-11-13)
+  - Chord tones toggle on/off (bold/dashed border)
+  - Extensions cycle through states (with dot indicators)
+  - Order never changes based on enabled state or presets
+- **Drag Area:** Unified interface for all enabled notes
+  - Drag to reorder (left = lower, right = higher)
+  - X button to remove notes
+  - Minimum 2 notes enforced
 
-**Status:** Planned
+**Files Created:**
+- `NoteSelector.tsx` - unified selector component
+- `NoteSelectorBlock.tsx` - individual selector blocks
+- `NoteSelector.css` - selector area styles
+
+**Files Removed:**
+- `ExtensionBlock.tsx` - replaced by unified selector
+- `ExtensionBlock.css` - replaced by unified selector
+
+**Bug Fixes (December 2024):**
+1. **State Persistence**: `mergePlaygroundBlocks` now preserves `currentState` field
+   - Previously reset on every chord/extension change
+   - Now maintains extension state across re-renders
+   
+2. **Variant Availability**: `buildPlaygroundBlocks` calculates all extension variants
+   - Previously filtered out unselected alterations (e.g., flat/sharp 9ths)
+   - Now computes chromatic intervals for all alterations:
+     * Flat 9th: root + 13 semitones
+     * Sharp 9th: root + 15 semitones
+     * Sharp 11th: root + 18 semitones
+     * Flat 13th: root + 20 semitones
+   - Ensures all variants available for cycling regardless of selection
+
+**Status:** Complete (December 2024)
 
 ---
 
-#### F5.3: Extension Integration with Presets 📋
+#### F5.3: Extension Integration with Presets ✅
 **Purpose:** Presets can include extensions (e.g., "Shell A + 9th").
 
-**New Presets:**
-- Shell A + 9th (1-3-7-9)
-- Rootless A (3-5-7-9) - already exists
-- Rootless B (7-9-3-5) - already exists
-- Shell Altered (1-3-7-♭9-♯11) for V7 chords
+**Implementation:**
+- Added `extensions` field to preset interface
+- New presets: Shell A+9 (1-3-7-9), Shell Altered (1-3-7-♭9-♯11)
+- Updated Rootless A/B to explicitly enable 9th
+- Preset apply logic sets extension states correctly
 
-**Status:** Planned
+**Files Modified:**
+- `ChordExplorer.tsx` - preset definitions with extension configs
+- `handlePresetApply` - applies extension states from preset
+
+**Status:** Complete (January 2026)
 
 ---
 
-### Phase 6: Context-Aware Recognition (Planned 📋)
+### Phase 6: Context-Aware Recognition (Completed ✅)
 
-#### F6.1: Voicing Pattern Detection Algorithm 📋
+#### F6.1: Voicing Pattern Detection Algorithm ✅
 **Purpose:** Recognize when user has built a standard voicing pattern.
+
+**Implementation:**
+- `src/lib/voicingRecognition.ts` - detection algorithm
+- `src/lib/patterns.ts` - 31 pattern definitions
 
 **Algorithm:**
 ```typescript
-function detectVoicingPattern(blocks: PlaygroundBlock[]): VoicingPattern | null {
-  const enabledRoles = blocks.filter(b => b.enabled).map(b => b.voicingRole);
-  
+function detectVoicingPattern(blocks: PlaygroundBlock[]): DetectedPattern | null {
+  const enabledBlocks = blocks.filter(b => b.enabled);
+  const roles = enabledBlocks.map(b => b.voicingRole);
+
+  // Try exact matches first
   for (const pattern of VOICING_PATTERNS) {
-    if (matchesPattern(enabledRoles, pattern.pattern)) {
-      return pattern;
+    if (matchesPatternExact(roles, pattern.pattern)) {
+      return { id: pattern.id, matchType: 'exact', confidence: 100, patternData: pattern };
+    }
+  }
+
+  // Try fuzzy matches (pattern with extra notes)
+  for (const pattern of VOICING_PATTERNS.filter(p => p.flexiblePattern)) {
+    const fuzzyResult = matchesPatternFuzzy(roles, pattern.pattern);
+    if (fuzzyResult.matches) {
+      return { id: pattern.id, matchType: 'fuzzy', confidence: calculated, extraNotes, patternData: pattern };
     }
   }
   return null;
 }
 ```
 
-**Files to Create:**
-- `src/lib/voicingRecognition.ts` - pattern detection
-- `src/lib/patterns.ts` - pattern definitions
+**Features:**
+- 300ms debounced detection as user drags blocks
+- Fuzzy matching with confidence scoring (50-95%)
+- Extra notes detection for educational feedback
 
-**Status:** Planned
+**Status:** Complete ✅
 
 ---
 
-#### F6.2: Pattern Library (Shell A/B, Drop-2, Rootless, Inversions) 📋
-**Purpose:** Define recognizable voicing patterns with explanations.
+#### F6.2: Pattern Browser & Library ✅
+**Purpose:** Browse and explore the 31-pattern voicing library.
 
-**Patterns:**
+**Implementation:**
+- `src/lib/patterns.ts` - VoicingPattern interface and VOICING_PATTERNS array
+- `src/components/PatternBrowser/PatternBrowser.tsx` - browsable modal UI
+
+**Pattern Categories:**
+- Shell (4): Shell A, Shell B, Shell A+9, Shell Altered
+- Rootless (4): Rootless A/B, Rootless A/B with 6th
+- Spread (3): Open, Drop-2, Drop-2 Rootless
+- Inversion (5): Triads 1st/2nd, 7th chords 1st/2nd/3rd
+- Slash (3): 3rd/5th/7th in bass
+
+**Pattern Interface:**
 ```typescript
-const VOICING_PATTERNS: VoicingPattern[] = [
-  {
-    id: 'drop-2',
-    name: 'Drop-2 Voicing',
-    pattern: ['fifth', 'root', 'third', 'seventh'],
-    description: 'Close-position chord with 2nd voice dropped an octave.',
-    whyItWorks: 'Opens up the voicing for better clarity and hand span.',
-    commonUse: 'Comping, solo piano, guitar adaptations.',
-  },
-  {
-    id: 'shell-a',
-    name: 'Shell A (Guide Tones)',
-    pattern: ['root', 'third', 'seventh'],
-    whyItWorks: '3rd defines quality, 7th defines chord type.',
-    commonUse: 'Left-hand comping, voice leading practice.',
-  },
-  {
-    id: 'slash-3',
-    name: '1st Inversion / Slash-3',
-    pattern: ['third', '*', '*', 'root'],
-    description: 'Third in the bass creates slash chord.',
-    caution: 'Can sound unstable without bassist covering root.',
-  },
-  // ... more patterns
-];
+interface VoicingPattern {
+  id: string;
+  name: string;
+  pattern: VoicingRole[];
+  flexiblePattern?: boolean;
+  category: 'shell' | 'rootless' | 'spread' | 'inversion' | 'slash';
+  description: string;
+  whyItWorks: string;
+  commonUse: string;
+  caution?: string;
+  recommendedFor?: ChordFunction[];
+  soundCharacter?: string;
+  relatedPatterns?: string[];
+}
 ```
 
-**Status:** Planned
+**PatternBrowser Features:**
+- Category accordion navigation
+- "Try It" buttons load patterns into Playground
+- Pattern details (description, why it works, when to use)
+- Chord function badges (ii, V, I)
+
+**Status:** Complete ✅
 
 ---
 
-#### F6.3: Insight Card UI ("You found a Drop-2!") 📋
-**Purpose:** Non-intrusive notification when pattern is detected.
+#### F6.3: PatternCard UI ("You built a Drop-2!") ✅
+**Purpose:** Celebratory feedback when pattern is detected.
 
-**UI Design:**
-- Small card/tooltip appears when pattern recognized
-- Shows pattern name, description, why it works
-- "Learn more" link to deeper explanation
-- Dismissible
+**Implementation:**
+- `src/components/FeedbackArea/PatternCard.tsx`
+- `src/components/FeedbackArea/FeedbackArea.css`
 
-**Example:**
-> 🎹 **You found a Drop-2 voicing!**  
-> This is created by taking a close-position chord and dropping the 2nd voice from the top down an octave.  
-> **Why it works**: Opens up the voicing for better clarity and hand span.  
-> **Common use**: Comping, solo piano, guitar adaptations.
+**UI Features:**
+- Celebration title: "You built a {name}!"
+- Category badge (Shell, Rootless, Spread, etc.)
+- Chord function badges (ii, V, I)
+- Discovery animation (pulse effect)
+- Expandable educational content
+- "Why It Works" callout box
+- Related patterns section
+- Fuzzy match description with contextual suggestions
 
-**Files to Create:**
-- `src/components/InsightCard/InsightCard.tsx`
-
-**Status:** Planned
+**Status:** Complete ✅
 
 ---
 
-#### F6.4: Educational Explanations & Tips 📋
+#### F6.4: Educational Explanations & Tips ✅
 **Purpose:** Provide context-sensitive learning content.
 
-**Content Types:**
-- Why this voicing works
-- When to use it
-- Common use cases
-- Cautions or caveats
-- Related patterns
+**Implementation:**
+- Enhanced PatternCard with expandable sections
+- `getFuzzyMatchSuggestion()` for contextual advice
 
-**Status:** Planned
+**Content Types:**
+- What it is (description)
+- Why it works (harmonic explanation)
+- When to use (common use cases)
+- Cautions (pattern-specific warnings)
+- Related patterns (see also section)
+- Fuzzy match suggestions ("Remove the 5th for a purer Shell A")
+
+**Status:** Complete ✅
 
 ---
 
@@ -981,8 +983,8 @@ See [OctavePlacement.md](OctavePlacement.md) for complete specification.
 - ✅ At least 2 blocks must remain enabled
 
 **Phase 4 (In Progress):**
-- [ ] Can toggle between single-hand and two-hand modes
-- [ ] Single-hand presets show triads and 7th inversions
+- [x] Can toggle between single-hand and two-hand modes ✅
+- [x] Single-hand presets show triads and 7th inversions ✅
 - [ ] Two-hand divider clearly separates LH/RH
 - [ ] Chord symbols display with conventional enharmonic spelling
 
@@ -1041,11 +1043,21 @@ See [OctavePlacement.md](OctavePlacement.md) for complete specification.
 **Multi-state extension blocks:** ✅ DECIDED  
 Use vertical toggle (like Price is Right wheel) that cycles Off → 9 → ♭9 → ♯9 → Off
 
-**Hand divider:** ✅ DECIDED  
-Fixed position, snaps to block boundaries (not freely draggable)
+**Hand context in Playground:** ✅ DECIDED - DEFERRED  
+Hand assignment (LH/RH) will not be part of Playground Mode.
 
-**Octave rules for single-hand:** ✅ DECIDED  
-Follow existing rules in [OctavePlacement.md](OctavePlacement.md), no special cases
+**Rationale:** 
+- Playground focuses on voicing construction (which notes, what order)
+- Hand assignment adds UI complexity without serving core learning goal
+- Hand features will be introduced where functionally necessary:
+  - Decision Tree: Passive color zones showing typical hand splits
+  - Melody-on-Top: Automatic split based on 1-octave rule
+  - Practice Mode: Explicit hand positions + fingering guidance
+
+**Impact:**
+- Simplified Playground UI - no hand mode toggle or divider
+- Single-hand presets removed (triad inversions, 7th inversions)
+- Focus shifts to extensions (Phase 5) and recognition (Phase 6)
 
 **Decision tree scope:** ✅ DECIDED  
 Works with template voicings only (not playground custom voicings)

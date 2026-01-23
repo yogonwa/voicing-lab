@@ -194,6 +194,122 @@
   color: #63b3ed;
 }
 
+.pattern-card__suggestion {
+  margin: 8px 0 0 0;
+  font-size: 0.8rem;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+/* ============================================
+   PATTERN CARD - CELEBRATION & BADGES
+   ============================================ */
+
+/* Discovery celebration animation */
+.pattern-card--discovered {
+  animation: celebrationPulse 0.6s ease-out;
+}
+
+@keyframes celebrationPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(99, 179, 237, 0.4);
+  }
+  30% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px 4px rgba(99, 179, 237, 0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(99, 179, 237, 0);
+  }
+}
+
+/* Category badge (shell, rootless, etc) */
+.pattern-card__category-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* Chord function badges (ii, V, I) */
+.pattern-card__functions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.pattern-card__function-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Fuzzy match description */
+.pattern-card__fuzzy-desc {
+  margin: 4px 0 0 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+}
+
+/* Why It Works callout */
+.pattern-card__why-callout {
+  display: flex;
+  gap: 12px;
+  background: rgba(104, 211, 145, 0.15);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.pattern-card__why-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.pattern-card__why-callout .pattern-card__section-title {
+  color: #68d391;
+  margin-bottom: 4px;
+}
+
+.pattern-card__why-callout p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Related patterns section */
+.pattern-card__related {
+  margin-top: 4px;
+}
+
+.pattern-card__related-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.pattern-card__related-tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
 /* ============================================
    WARNING CARD
    ============================================ */

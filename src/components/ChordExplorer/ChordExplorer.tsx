@@ -40,6 +40,7 @@ import { NoteBlocks } from './NoteBlocks';
 import { PlaygroundPanel } from './PlaygroundPanel';
 import { HelpToggle } from '../HelpToggle';
 import { FeedbackArea } from '../FeedbackArea';
+import { PatternBrowser } from '../PatternBrowser';
 import {
   PlaygroundBlock,
   VoicePresetHint,
@@ -59,6 +60,7 @@ import {
   type VoicingWarning,
   type DetectedPattern,
 } from '../../lib/core';
+import type { VoicingPattern } from '../../lib/patterns';
 
 // ============================================
 // TYPES
@@ -269,6 +271,9 @@ export function ChordExplorer() {
   // Pattern recognition and warnings state
   const [detectedPattern, setDetectedPattern] = useState<DetectedPattern | null>(null);
   const [voicingWarnings, setVoicingWarnings] = useState<VoicingWarning[]>([]);
+
+  // Pattern Browser modal state
+  const [isPatternBrowserOpen, setIsPatternBrowserOpen] = useState(false);
 
   // Audio state
   const [audioReady, setAudioReady] = useState(isAudioReady());
@@ -530,6 +535,111 @@ export function ChordExplorer() {
     setPlaygroundBlocks(basePlaygroundBlocks);
   }, [basePlaygroundBlocks]);
 
+  /**
+   * Handle "Try It" from Pattern Browser - load a pattern into Playground
+   */
+  const handleTryPattern = useCallback((pattern: VoicingPattern) => {
+    // Convert pattern roles to block order (mapping voicing roles to block IDs)
+    const order: string[] = pattern.pattern.map(role => {
+      switch (role) {
+        case 'root': return 'root';
+        case 'third': return 'third';
+        case 'fifth': return 'fifth';
+        case 'seventh': return 'seventh';
+        case 'ninth':
+        case 'flatNinth':
+        case 'sharpNinth':
+          return 'ninth';
+        case 'eleventh':
+        case 'sharpEleventh':
+          return 'eleventh';
+        case 'thirteenth':
+        case 'flatThirteenth':
+          return 'thirteenth';
+        default: return role;
+      }
+    });
+
+    // Determine which blocks should be disabled (not in pattern)
+    const allBlockIds: string[] = ['root', 'third', 'fifth', 'seventh', 'ninth', 'eleventh', 'thirteenth'];
+    const patternBlockIds = new Set<string>(order);
+    const disabled = allBlockIds.filter(id => !patternBlockIds.has(id));
+
+    // Determine extension states from pattern
+    const extensions: Record<string, ExtensionVariantKey> = {};
+    pattern.pattern.forEach(role => {
+      if (role === 'ninth') extensions.ninth = 'natural';
+      else if (role === 'flatNinth') extensions.ninth = 'flat';
+      else if (role === 'sharpNinth') extensions.ninth = 'sharp';
+      else if (role === 'eleventh') extensions.eleventh = 'natural';
+      else if (role === 'sharpEleventh') extensions.eleventh = 'sharp';
+      else if (role === 'thirteenth') extensions.thirteenth = 'natural';
+      else if (role === 'flatThirteenth') extensions.thirteenth = 'flat';
+    });
+
+    // Determine voicing hint based on category
+    const voiceHint: VoicePresetHint = pattern.category === 'spread' ? 'spread' : 'compact';
+
+    // Apply the pattern as a pseudo-preset
+    setPlaygroundBlocks((prev) => {
+      const blockMap = new Map(prev.map((block) => [block.id, block]));
+      const ordered: PlaygroundBlock[] = [];
+      const addedIds = new Set<string>();
+
+      // Add blocks in pattern order (unique IDs only)
+      order.forEach((id) => {
+        if (addedIds.has(id)) return;
+        const block = blockMap.get(id);
+        if (block) {
+          ordered.push(block);
+          addedIds.add(id);
+          blockMap.delete(id);
+        }
+      });
+
+      // Add remaining blocks at the end
+      blockMap.forEach((block) => ordered.push(block));
+
+      const disabledSet = new Set(disabled);
+
+      return ordered.map((block) => {
+        let updated = { ...block };
+        const isInPattern = patternBlockIds.has(block.id);
+        const shouldDisable = disabledSet.has(block.id);
+
+        // Handle chord tones
+        if (!block.isExtension) {
+          updated.enabled = shouldDisable ? false : isInPattern;
+        }
+
+        // Handle extensions
+        if (block.isExtension && block.extensionFamily) {
+          const extensionState = extensions[block.id];
+          if (extensionState) {
+            // Extension is specified in pattern - enable with that variant
+            updated = updateBlockVariant(updated, extensionState, true);
+            updated.currentState = extensionState;
+          } else {
+            // Extension not in pattern - set to off
+            updated.enabled = false;
+            updated.currentState = 'off';
+          }
+        }
+
+        return updated;
+      });
+    });
+
+    // Set the preset ID to the pattern ID for voicing hint
+    setActivePresetId(pattern.id);
+    setPlaygroundWarning(null);
+
+    // Switch to Playground mode if in Template mode
+    if (mode === 'template') {
+      setMode('playground');
+    }
+  }, [mode]);
+
   const chordSelectorInputs = (
     <div className="chord-selectors">
       <div className="selector-group">
@@ -657,6 +767,13 @@ export function ChordExplorer() {
             <span className="sticky-header__subtitle">Build voicings by selecting and reordering notes</span>
           </div>
           <div className="sticky-header__right">
+            <button
+              className="browse-patterns-btn"
+              onClick={() => setIsPatternBrowserOpen(true)}
+              aria-label="Browse pattern library"
+            >
+              Browse Patterns
+            </button>
             <HelpToggle />
             <button
               className={`arpeggio-toggle ${arpeggioMode ? 'active' : ''}`}
@@ -784,6 +901,13 @@ export function ChordExplorer() {
           extensionTips={activeTips}
         />
       </section>
+
+      {/* Pattern Browser Modal */}
+      <PatternBrowser
+        isOpen={isPatternBrowserOpen}
+        onClose={() => setIsPatternBrowserOpen(false)}
+        onTryPattern={handleTryPattern}
+      />
     </div>
   );
 }

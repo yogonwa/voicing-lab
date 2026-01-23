@@ -193,3 +193,47 @@ export function getPatternsByCategory(category: VoicingPattern['category']): Voi
   return VOICING_PATTERNS.filter(p => p.category === category);
 }
 
+/**
+ * Get a contextual suggestion for a fuzzy match.
+ *
+ * Provides actionable advice based on what extra notes were detected
+ * and the base pattern type.
+ *
+ * @param detected - The detected pattern from `detectVoicingPattern`
+ * @returns A suggestion string, or null for exact matches
+ */
+export function getFuzzyMatchSuggestion(detected: DetectedPattern): string | null {
+  if (detected.matchType === 'exact' || !detected.extraNotes || detected.extraNotes.length === 0) {
+    return null;
+  }
+
+  const extras = detected.extraNotes;
+  const category = detected.patternData.category;
+  const patternName = detected.patternData.name;
+
+  // Check if all extras are extensions
+  const extensionRoles = ['ninth', 'flatNinth', 'sharpNinth', 'eleventh', 'sharpEleventh', 'thirteenth', 'flatThirteenth'];
+  const allExtensions = extras.every(role => extensionRoles.includes(role));
+
+  // Check if 5th is the extra note (common for shells)
+  const hasFifth = extras.includes('fifth');
+
+  if (category === 'shell') {
+    if (hasFifth && extras.length === 1) {
+      return `Remove the 5th for a purer ${patternName}.`;
+    }
+    if (allExtensions) {
+      return `You've added color tones! Try the basic ${patternName} first to hear the core sound.`;
+    }
+  }
+
+  if (category === 'rootless') {
+    if (extras.includes('root')) {
+      return 'Rootless voicings work best when the bassist plays the root.';
+    }
+  }
+
+  // Default suggestion
+  return `Try removing the ${extras.map(formatVoicingRole).join(', ')} for the classic ${patternName}.`;
+}
+
