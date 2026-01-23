@@ -1,6 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
+// Mock react-router-dom (uses src/__mocks__/react-router-dom.tsx)
+jest.mock('react-router-dom');
+
 // Mock the audio engine to avoid Tone.js ESM issues in tests
 jest.mock('./lib/audio');
 
@@ -18,21 +21,14 @@ test('renders tagline', () => {
   expect(tagline).toBeInTheDocument();
 });
 
-test('renders intro text', () => {
+test('renders navigation links', () => {
   render(<App />);
-  const intro = screen.getByText(/Move beyond blocky root-position chords/i);
-  expect(intro).toBeInTheDocument();
-});
-
-test('renders voicing display', () => {
-  render(<App />);
-  const progressionTitle = screen.getByText(/ii-V-I in C Major/i);
-  expect(progressionTitle).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Explorer/i })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Voice Leading Trainer/i })).toBeInTheDocument();
 });
 
 test('renders keyboard shortcuts in footer', () => {
   render(<App />);
-  // Footer contains keyboard shortcuts hint
   const footer = document.querySelector('.App-footer');
   expect(footer).toBeInTheDocument();
   expect(footer).toHaveTextContent('Space');

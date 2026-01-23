@@ -6,22 +6,48 @@
  */
 
 import React from 'react';
+import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import './App.css';
 import { VoicingDisplay, ChordExplorer } from './components';
 
-function App() {
+function ExplorerPage() {
+  return (
+    <>
+      <ChordExplorer />
+      <VoicingDisplay />
+    </>
+  );
+}
+
+function TrainerPage() {
+  return (
+    <div className="trainer-placeholder">
+      <h2>Voice Leading Trainer</h2>
+      <p>Coming soon...</p>
+    </div>
+  );
+}
+
+/**
+ * App content without router wrapper.
+ * Exported for testing with MemoryRouter.
+ */
+export function AppContent() {
   return (
     <div className="App">
       <header className="App-header">
         <h1>Voicing Lab</h1>
         <p className="tagline">Learn professional jazz piano voicings</p>
-        <p className="intro">
-          Move beyond blocky root-position chords. Explore extensions and hear how pros voice progressions.
-        </p>
+        <nav className="App-nav">
+          <NavLink to="/" end>Explorer</NavLink>
+          <NavLink to="/trainer">Voice Leading Trainer</NavLink>
+        </nav>
       </header>
       <main>
-        <ChordExplorer />
-        <VoicingDisplay />
+        <Routes>
+          <Route path="/" element={<ExplorerPage />} />
+          <Route path="/trainer" element={<TrainerPage />} />
+        </Routes>
       </main>
       <footer className="App-footer">
         <p>
@@ -29,6 +55,14 @@ function App() {
         </p>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 
