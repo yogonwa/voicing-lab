@@ -8,7 +8,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import './App.css';
-import { VoicingDisplay, ChordExplorer } from './components';
+import { VoicingDisplay, ChordExplorer, VoiceLeadingTrainer } from './components';
 
 function ExplorerPage() {
   return (
@@ -20,12 +20,7 @@ function ExplorerPage() {
 }
 
 function TrainerPage() {
-  return (
-    <div className="trainer-placeholder">
-      <h2>Voice Leading Trainer</h2>
-      <p>Coming soon...</p>
-    </div>
-  );
+  return <VoiceLeadingTrainer />;
 }
 
 /**

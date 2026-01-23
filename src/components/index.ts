@@ -13,4 +13,5 @@ export {
 export type { ActiveNote, PianoKeyboardProps } from './PianoKeyboard';
 export { HelpToggle } from './HelpToggle';
 export { FeedbackArea, PatternCard, WarningCard } from './FeedbackArea';
+export { VoiceLeadingTrainer } from './VoiceLeadingTrainer';
 

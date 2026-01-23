@@ -118,11 +118,12 @@ describe('analyzeVoiceMotion', () => {
 describe('scoreVoicingSubmission', () => {
   const makeBlock = (role: string, note: string): PlaygroundBlock => ({
     id: `block-${role}`,
+    label: role.charAt(0).toUpperCase(),
+    note: note.replace(/\d/, '') as any,
     voicingRole: role as any,
-    noteName: note.replace(/\d/, '') as any,
+    cssRole: role,
     enabled: true,
-    isNew: false,
-    justAdded: false,
+    isExtension: false,
   });
 
   it('scores a well-constructed voicing highly', () => {
