@@ -259,16 +259,60 @@ Total score: 0-100 points across three components:
 
 ## Visual Design & Aesthetics
 
-**Status:** To be determined
+### Theme: Classic Jazz Club (Dark, Warm, Timeless)
 
-Initial consideration: Jazz club aesthetic with warm colors (brown/gold) from loveable prototype, but exploring other visual directions.
+**Vibe:** Late-night club, wood paneling, low light, whiskey. Serious, musical, slightly academic. Feels like liner notes.
 
-**Next step:** Discuss and define:
-- Color palette and theme
-- Typography choices
-- Component styling (cards, buttons, panels)
-- Piano keyboard visual treatment
-- Animation style and timing
+### Color Palette
+
+- **Charcoal Black** `#121212` - Main background
+- **Panel Background** `#1A1A1A` - Setup/Scoring panels (slightly lighter)
+- **Warm Brass/Gold** `#C9A24D` - Accents, active chords, highlights
+- **Off-White** `#EAE7DC` - Primary text, white piano keys
+
+### Typography
+
+- **Primary (Headings, Chord Names):** Playfair Display (serif, elegant)
+- **Secondary (UI, Labels, Body):** Inter or Source Sans 3 (sans-serif, readable)
+
+### Component Styling
+
+**Background & Structure:**
+- App background: Charcoal Black #121212
+- Panels (Setup, Scoring): #1A1A1A with subtle border and soft shadow
+- No harsh edges, gentle rounded corners
+
+**Piano Keyboard:**
+- White keys: Off-white #EAE7DC (natural ivory feel)
+- Black keys: Deep charcoal #0A0A0A
+- Selected keys: Warm Brass #C9A24D glow/highlight
+- Locked keys (previous chords): Brass at 40% opacity (muted gold)
+- Hover state: Subtle brightness increase
+
+**Typography Application:**
+- Chord names ("Dm7", "G7"): Playfair Display, medium-large size, brass color
+- Chord tone labels [♭3] [5] [7]: Inter/Source Sans 3, smaller, off-white
+- Panel headings: Playfair Display, off-white
+- Body text, buttons: Inter/Source Sans 3
+
+**Voice Leading Arrows (Desaturated for warm low-light vibe):**
+- Green (common tone): Muted sage #7A9D7E
+- Blue (half-step): Cool jazz blue #5B8FA3
+- Yellow (whole-step): Warm amber #D4A574
+- Orange (small leap): Burnt orange #C4845F
+- Red (large leap): Deep burgundy #8B4D4D
+
+**Scoring Panel:**
+- Score number: Large Playfair Display in brass (good scores), muted when poor
+- Icons: Simple line-art style in off-white
+- Buttons:
+  - Primary: Brass background #C9A24D, charcoal text
+  - Secondary: Outline style, brass border, off-white text
+
+**Animations:**
+- Subtle, smooth transitions (300ms ease-in-out)
+- Arrow drawing animation from top to bottom
+- No jarring or bouncy effects - keep it sophisticated
 
 ---
 
