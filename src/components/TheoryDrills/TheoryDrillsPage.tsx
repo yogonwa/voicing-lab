@@ -190,7 +190,6 @@ export function TheoryDrillsPage() {
   const [queue, setQueue] = useState<DrillQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [newCardIds, setNewCardIds] = useState<Set<string>>(new Set());
-  const [waitingForNext, setWaitingForNext] = useState(false);
   const [stats, setStats] = useState<SessionStats>({
     totalCards: 0,
     correctCount: 0,
@@ -222,7 +221,6 @@ export function TheoryDrillsPage() {
     setQueue(q);
     setNewCardIds(newIds);
     setCurrentIndex(0);
-    setWaitingForNext(false);
     setStats({
       totalCards: q.length,
       correctCount: 0,
@@ -260,7 +258,6 @@ export function TheoryDrillsPage() {
       };
     });
 
-    setWaitingForNext(true);
   }, [queue, currentIndex]);
 
   function handleNext() {
@@ -269,7 +266,6 @@ export function TheoryDrillsPage() {
       setPageState('summary');
     } else {
       setCurrentIndex(nextIndex);
-      setWaitingForNext(false);
     }
   }
 
@@ -310,13 +306,9 @@ export function TheoryDrillsPage() {
             key={currentQuestion.id + currentIndex}
             question={currentQuestion}
             onAnswer={handleAnswer}
+            onNext={handleNext}
+            nextLabel={currentIndex + 1 < queue.length ? 'Next Card' : 'See Results'}
           />
-
-          {waitingForNext && (
-            <button className="flashcard__next" onClick={handleNext}>
-              {currentIndex + 1 < queue.length ? 'Next Card' : 'See Results'}
-            </button>
-          )}
         </>
       )}
 

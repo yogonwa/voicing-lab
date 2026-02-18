@@ -229,17 +229,20 @@
   grid-template-columns: 1fr;
 }
 
-.flashcard__feedback {
-  text-align: center;
-  margin-bottom: 20px;
+/* Feedback + Next button on the same row */
+.flashcard__action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .flashcard__feedback-text {
   font-size: 1rem;
   font-weight: 600;
-  padding: 10px 20px;
+  padding: 10px 16px;
   border-radius: 8px;
-  display: inline-block;
 }
 
 .flashcard__feedback-text--correct {
@@ -252,21 +255,22 @@
   color: #c53030;
 }
 
-.flashcard__next {
-  width: 100%;
-  padding: 16px;
+.flashcard__next-inline {
+  flex-shrink: 0;
+  padding: 10px 20px;
   background: #7c3aed;
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s;
-  min-height: 52px;
+  min-height: 44px;
+  white-space: nowrap;
 }
 
-.flashcard__next:hover {
+.flashcard__next-inline:hover {
   background: #6d28d9;
 }
 

@@ -23,6 +23,8 @@ import type { Note } from '../../lib/core';
 interface FlashCardProps {
   question: DrillQuestion;
   onAnswer: (correct: boolean) => void;
+  onNext: () => void;
+  nextLabel: string;
 }
 
 // ============================================
@@ -91,7 +93,7 @@ function promptText(drillType: string): string {
 // COMPONENT
 // ============================================
 
-export function FlashCard({ question, onAnswer }: FlashCardProps) {
+export function FlashCard({ question, onAnswer, onNext, nextLabel }: FlashCardProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
 
@@ -137,10 +139,13 @@ export function FlashCard({ question, onAnswer }: FlashCardProps) {
 
       {answered && (
         <>
-          <div className="flashcard__feedback">
+          <div className="flashcard__action-row">
             <span className={`flashcard__feedback-text flashcard__feedback-text--${correct ? 'correct' : 'wrong'}`}>
               {correct ? 'Correct!' : `Answer: ${question.correctAnswer}`}
             </span>
+            <button className="flashcard__next-inline" onClick={onNext}>
+              {nextLabel}
+            </button>
           </div>
 
           {activeNotes.length > 0 && (
