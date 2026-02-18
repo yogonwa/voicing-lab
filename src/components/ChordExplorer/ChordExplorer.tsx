@@ -27,6 +27,7 @@ import {
   getVoicingRoleForExtensionKey,
   Note,
   VoicingRole,
+  getNoteChroma,
 } from '../../lib/core';
 import {
   initAudio,
@@ -81,8 +82,6 @@ const QUALITIES: { value: ChordQuality; label: string }[] = [
 ];
 
 const MIN_ENABLED_BLOCKS = 2;
-const TEMPLATE_ROOT_OCTAVE = 4;
-const TEMPLATE_EXTENSION_OCTAVE = 5;
 
 interface PlaygroundPreset {
   id: string;
@@ -180,16 +179,67 @@ type TemplateNote = {
   role: VoicingRole;
 };
 
+/**
+ * Determine base octave for root note.
+ * Roots A, A#, B → octave 3 (keeps voicing within comfortable range)
+ * Roots C through G# → octave 4
+ */
+function getTemplateRootOctave(rootNoteName: NoteName): number {
+  const chroma = getNoteChroma(rootNoteName);
+  return chroma >= 9 ? 3 : 4;  // A=9, A#=10, B=11
+}
+
+/**
+ * Apply octave wrapping so notes display in ascending order (R-3-5-7).
+ * When chromatic pitch decreases, bump to next octave.
+ */
+function applyTemplateOctaveWrapping(noteNames: NoteName[], baseOctave: number): Note[] {
+  const result: Note[] = [];
+  let currentOctave = baseOctave;
+  let previousChroma: number | null = null;
+
+  noteNames.forEach((noteName) => {
+    const chroma = getNoteChroma(noteName);
+    if (previousChroma !== null && chroma <= previousChroma) {
+      currentOctave += 1;
+    }
+    result.push(`${noteName}${currentOctave}` as Note);
+    previousChroma = chroma;
+  });
+
+  return result;
+}
+
 function buildTemplateNoteSequence(
   chordTones: ExtendedChordTones,
   selectedExtensions: SelectedExtensions
 ): TemplateNote[] {
-  const sequence: TemplateNote[] = [
-    { note: `${chordTones.root}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'root' },
-    { note: `${chordTones.third}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'third' },
-    { note: `${chordTones.fifth}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'fifth' },
-    { note: `${chordTones.seventh}${TEMPLATE_ROOT_OCTAVE}` as Note, role: 'seventh' },
+  // Get note names for basic chord tones
+  const basicNoteNames: NoteName[] = [
+    chordTones.root,
+    chordTones.third,
+    chordTones.fifth,
+    chordTones.seventh,
   ];
+
+  // Determine root octave based on pitch class (A/A#/B → 3, others → 4)
+  const baseOctave = getTemplateRootOctave(chordTones.root);
+
+  // Apply octave wrapping for ascending display
+  const voicedNotes = applyTemplateOctaveWrapping(basicNoteNames, baseOctave);
+
+  // Build sequence with roles
+  const sequence: TemplateNote[] = [
+    { note: voicedNotes[0], role: 'root' },
+    { note: voicedNotes[1], role: 'third' },
+    { note: voicedNotes[2], role: 'fifth' },
+    { note: voicedNotes[3], role: 'seventh' },
+  ];
+
+  // Handle extensions - continue from 7th's octave + 1
+  const seventhChroma = getNoteChroma(chordTones.seventh);
+  let extensionOctave = parseInt(voicedNotes[3].slice(-1)) + 1;
+  let previousExtChroma = seventhChroma;
 
   DEFAULT_EXTENSION_RENDER_ORDER.forEach((key) => {
     if (!selectedExtensions[key]) return;
@@ -198,10 +248,15 @@ function buildTemplateNoteSequence(
     const role = getVoicingRoleForExtensionKey(key);
 
     if (noteName) {
+      const chroma = getNoteChroma(noteName);
+      if (chroma <= previousExtChroma) {
+        extensionOctave += 1;
+      }
       sequence.push({
-        note: `${noteName}${TEMPLATE_EXTENSION_OCTAVE}` as Note,
+        note: `${noteName}${extensionOctave}` as Note,
         role,
       });
+      previousExtChroma = chroma;
     }
   });
 

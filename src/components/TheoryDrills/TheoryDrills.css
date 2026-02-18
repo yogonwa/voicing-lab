@@ -1,0 +1,438 @@
+/**
+ * Theory Drills — Styles
+ *
+ * Mobile-first design. All answer buttons >= 44px tap target.
+ */
+
+/* ============================================
+   PAGE LAYOUT
+   ============================================ */
+
+.theory-drills {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ============================================
+   SETTINGS PANEL
+   ============================================ */
+
+.drill-settings {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.drill-settings h3 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2d3748;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.drill-settings__group {
+  margin-bottom: 16px;
+}
+
+.drill-settings__group:last-child {
+  margin-bottom: 0;
+}
+
+.drill-settings__label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 8px;
+}
+
+.drill-settings__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.drill-settings__btn {
+  padding: 8px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #4a5568;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 44px;
+}
+
+.drill-settings__btn:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.drill-settings__btn--active {
+  border-color: #7c3aed;
+  background: #7c3aed;
+  color: white;
+}
+
+.drill-settings__btn--active:hover {
+  background: #6d28d9;
+}
+
+.drill-settings__actions {
+  margin-top: 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.drill-settings__start {
+  flex: 1;
+  padding: 14px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-height: 48px;
+}
+
+.drill-settings__start:hover {
+  background: #6d28d9;
+}
+
+/* ============================================
+   PROGRESS BAR
+   ============================================ */
+
+.drill-progress {
+  margin-bottom: 20px;
+}
+
+.drill-progress__bar-wrap {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.drill-progress__bar {
+  height: 100%;
+  background: #7c3aed;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.drill-progress__label {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+/* ============================================
+   FLASHCARD
+   ============================================ */
+
+.flashcard {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.flashcard__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.flashcard__prompt {
+  font-size: 0.95rem;
+  color: #718096;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.flashcard__chord {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.flashcard__chord sup {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.flashcard__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.flashcard__option {
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  color: #2d3748;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flashcard__option:hover:not(:disabled) {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+.flashcard__option--correct {
+  border-color: #38a169;
+  background: #f0fff4;
+  color: #276749;
+}
+
+.flashcard__option--wrong {
+  border-color: #e53e3e;
+  background: #fff5f5;
+  color: #c53030;
+}
+
+.flashcard__option--reveal-correct {
+  border-color: #38a169;
+  background: #f0fff4;
+  color: #276749;
+}
+
+.flashcard__option:disabled {
+  cursor: default;
+}
+
+/* Guide tone options are wider */
+.flashcard__options--guide {
+  grid-template-columns: 1fr;
+}
+
+.flashcard__feedback {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.flashcard__feedback-text {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.flashcard__feedback-text--correct {
+  background: #f0fff4;
+  color: #276749;
+}
+
+.flashcard__feedback-text--wrong {
+  background: #fff5f5;
+  color: #c53030;
+}
+
+.flashcard__next {
+  width: 100%;
+  padding: 16px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-height: 52px;
+}
+
+.flashcard__next:hover {
+  background: #6d28d9;
+}
+
+/* ============================================
+   PIANO HIGHLIGHT (answer reveal)
+   ============================================ */
+
+.flashcard__piano {
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.flashcard__piano-label {
+  font-size: 0.8rem;
+  color: #718096;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* ============================================
+   SESSION SUMMARY
+   ============================================ */
+
+.session-summary {
+  background: white;
+  border-radius: 16px;
+  padding: 32px 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.session-summary__title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 24px 0;
+}
+
+.session-summary__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.session-summary__stat {
+  padding: 16px 8px;
+  background: #f7f8fc;
+  border-radius: 10px;
+}
+
+.session-summary__stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #7c3aed;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.session-summary__stat-label {
+  font-size: 0.75rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.session-summary__leeches {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.session-summary__leeches-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 8px 0;
+}
+
+.session-summary__leeches-hint {
+  font-size: 0.8rem;
+  color: #92400e;
+  margin: 0 0 10px 0;
+}
+
+.session-summary__leech-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.session-summary__leech-item {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.session-summary__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.session-summary__btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 48px;
+  border: none;
+  transition: all 0.15s;
+}
+
+.session-summary__btn--primary {
+  background: #7c3aed;
+  color: white;
+}
+
+.session-summary__btn--primary:hover {
+  background: #6d28d9;
+}
+
+.session-summary__btn--secondary {
+  background: #f7f8fc;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+}
+
+.session-summary__btn--secondary:hover {
+  background: #e2e8f0;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 480px) {
+  .flashcard {
+    padding: 24px 16px;
+  }
+
+  .flashcard__chord {
+    font-size: 2rem;
+  }
+
+  .flashcard__option {
+    min-height: 56px;
+    font-size: 1.1rem;
+  }
+
+  .session-summary__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .drill-settings__actions {
+    flex-direction: column;
+  }
+}

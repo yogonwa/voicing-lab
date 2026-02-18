@@ -171,7 +171,7 @@ function createBlocks(
 // COMPONENT
 // ============================================
 
-export function VoiceLeadingTrainer() {
+export default function VoiceLeadingTrainer() {
   // Key progress (persisted)
   const [keyProgress, setKeyProgress] = useState<KeyProgress>(() => loadKeyProgress());
 

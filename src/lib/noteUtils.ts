@@ -43,12 +43,30 @@ export function toMidi(note: Note): number {
 }
 
 /**
+ * Return the enharmonic equivalent of a note name, or null if none.
+ * Handles both sharp→flat and flat→sharp conversions.
+ *
+ * @example enharmonicEquivalent('C#') → 'Db'
+ * @example enharmonicEquivalent('Bb') → 'A#'
+ * @example enharmonicEquivalent('C')  → null
+ */
+export function enharmonicEquivalent(note: string): string | null {
+  const SHARP_TO_FLAT: Record<string, string> = {
+    'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb',
+  };
+  const FLAT_TO_SHARP: Record<string, string> = {
+    'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
+  };
+  return SHARP_TO_FLAT[note] ?? FLAT_TO_SHARP[note] ?? null;
+}
+
+/**
  * Format a voicing role for human-readable display.
  * Used in pattern recognition, warnings, and educational feedback.
- * 
+ *
  * @param role - The voicing role to format
  * @returns Formatted string with musical symbols (e.g., '♭9', '♯11')
- * 
+ *
  * @example
  * formatVoicingRole('flatNinth') // => '♭9'
  * formatVoicingRole('sharpEleventh') // => '♯11'

@@ -9,6 +9,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import './App.css';
 import { VoicingDisplay, ChordExplorer, VoiceLeadingTrainer } from './components';
+import { TheoryDrillsPage } from './components/TheoryDrills';
 
 function ExplorerPage() {
   return (
@@ -21,6 +22,10 @@ function ExplorerPage() {
 
 function TrainerPage() {
   return <VoiceLeadingTrainer />;
+}
+
+function DrillsPage() {
+  return <TheoryDrillsPage />;
 }
 
 /**
@@ -36,12 +41,14 @@ export function AppContent() {
         <nav className="App-nav">
           <NavLink to="/" end>Explorer</NavLink>
           <NavLink to="/trainer">Voice Leading Trainer</NavLink>
+          <NavLink to="/drills">Theory Drills</NavLink>
         </nav>
       </header>
       <main>
         <Routes>
           <Route path="/" element={<ExplorerPage />} />
           <Route path="/trainer" element={<TrainerPage />} />
+          <Route path="/drills" element={<DrillsPage />} />
         </Routes>
       </main>
       <footer className="App-footer">

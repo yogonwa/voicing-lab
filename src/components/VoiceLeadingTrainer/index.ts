@@ -2,7 +2,7 @@
  * VoiceLeadingTrainer - Barrel Exports
  */
 
-export { VoiceLeadingTrainer } from './VoiceLeadingTrainer';
+export { default as VoiceLeadingTrainer } from './VoiceLeadingTrainer';
 export { ProgressionDisplay } from './ProgressionDisplay';
 export { NotePalette } from './NotePalette';
 export { VoicingBuilder } from './VoicingBuilder';
