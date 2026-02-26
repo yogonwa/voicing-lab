@@ -1,21 +1,13 @@
-/**
- * VoiceLeadingTrainer Component
- *
- * Main container for the Voice Leading Trainer mode.
- * Manages trainer state, orchestrates progression flow, and coordinates
- * between the note palette, voicing builder, and score display.
- */
-
 import React, { useState, useCallback, useMemo } from 'react';
 import './VoiceLeadingTrainer.css';
 
 import { ProgressionDisplay } from './ProgressionDisplay';
-import { NotePalette } from './NotePalette';
 import { VoicingBuilder } from './VoicingBuilder';
 import { ScoreDisplay } from './ScoreDisplay';
 import { KeySelector } from './KeySelector';
 
-import type { NoteName } from '../../lib/chordCalculator';
+import { getExtendedChordTones, parseNote, getVoicingRoleForNoteName } from '../../lib/core';
+import type { NoteName, ChordQuality } from '../../lib/chordCalculator';
 import type { Note, VoicingRole } from '../../lib/voicingTemplates';
 import type { PlaygroundBlock } from '../ChordExplorer/playgroundUtils';
 
@@ -32,8 +24,6 @@ import {
 
 import {
   getStarterVoicing,
-  getChordToneHints,
-  getExtensionHints,
 } from '../../lib/starterVoicings';
 
 import {
@@ -48,8 +38,6 @@ import {
   type KeyProgress,
 } from '../../lib/keyProgress';
 
-import { getExtendedChordTones } from '../../lib/chordCalculator';
-
 // ============================================
 // TYPES
 // ============================================
@@ -60,111 +48,69 @@ type TrainerPhase = 'building' | 'scoring' | 'complete';
 // HELPERS
 // ============================================
 
-/**
- * Calculate notes for selected roles based on chord tones.
- */
-function calculateNotes(
-  selectedRoles: VoicingRole[],
-  root: NoteName,
-  quality: 'min7' | 'dom7' | 'maj7'
-): Note[] {
-  const tones = getExtendedChordTones({ root, quality });
-
-  return selectedRoles.map(role => {
-    let noteName: NoteName;
-
-    switch (role) {
-      case 'root': noteName = tones.root; break;
-      case 'third': noteName = tones.third; break;
-      case 'fifth': noteName = tones.fifth; break;
-      case 'seventh': noteName = tones.seventh; break;
-      case 'ninth': noteName = tones.extensions.ninth; break;
-      case 'eleventh': noteName = tones.extensions.eleventh; break;
-      case 'thirteenth': noteName = tones.extensions.thirteenth; break;
-      default: noteName = tones.root;
-    }
-
-    // Assign octaves based on role (simple heuristic)
-    // Lower notes get lower octaves
-    const octave = role === 'root' ? 3 : role === 'thirteenth' ? 5 : 4;
-    return `${noteName}${octave}` as Note;
-  });
-}
-
-/**
- * CSS class mapping for voicing roles.
- */
-const ROLE_CSS_MAP: Record<VoicingRole, string> = {
-  root: 'root',
-  third: 'third',
-  fifth: 'fifth',
-  seventh: 'seventh',
-  ninth: 'ninth',
-  flatNinth: 'flat-ninth',
-  sharpNinth: 'sharp-ninth',
-  eleventh: 'eleventh',
-  sharpEleventh: 'sharp-eleventh',
-  thirteenth: 'thirteenth',
-  flatThirteenth: 'flat-thirteenth',
-};
-
-/**
- * Label mapping for voicing roles.
- */
 const ROLE_LABEL_MAP: Record<VoicingRole, string> = {
-  root: 'R',
-  third: '3',
-  fifth: '5',
-  seventh: '7',
-  ninth: '9',
-  flatNinth: '♭9',
-  sharpNinth: '♯9',
-  eleventh: '11',
-  sharpEleventh: '♯11',
-  thirteenth: '13',
-  flatThirteenth: '♭13',
+  root: 'R', third: '3', fifth: '5', seventh: '7',
+  ninth: '9', flatNinth: '♭9', sharpNinth: '♯9',
+  eleventh: '11', sharpEleventh: '♯11',
+  thirteenth: '13', flatThirteenth: '♭13',
 };
 
-/**
- * Check if a role is an extension.
- */
+const ROLE_CSS_MAP: Record<VoicingRole, string> = {
+  root: 'root', third: 'third', fifth: 'fifth', seventh: 'seventh',
+  ninth: 'ninth', flatNinth: 'flat-ninth', sharpNinth: 'sharp-ninth',
+  eleventh: 'eleventh', sharpEleventh: 'sharp-eleventh',
+  thirteenth: 'thirteenth', flatThirteenth: 'flat-thirteenth',
+};
+
 function isExtensionRole(role: VoicingRole): boolean {
-  return ['ninth', 'flatNinth', 'sharpNinth', 'eleventh', 'sharpEleventh', 'thirteenth', 'flatThirteenth'].includes(role);
+  return ['ninth','flatNinth','sharpNinth','eleventh','sharpEleventh','thirteenth','flatThirteenth'].includes(role);
 }
 
 /**
- * Create playground blocks from selected roles.
+ * Build PlaygroundBlocks from actual clicked notes.
+ * Role is inferred by matching note name against chord tones.
+ * Out-of-chord notes fall back to 'root' role.
  */
-function createBlocks(
-  selectedRoles: VoicingRole[],
+function createBlocksFromNotes(
+  notes: Note[],
   root: NoteName,
-  quality: 'min7' | 'dom7' | 'maj7'
+  quality: ChordQuality
 ): PlaygroundBlock[] {
-  const tones = getExtendedChordTones({ root, quality });
-
-  return selectedRoles.map(role => {
-    let noteName: NoteName;
-    switch (role) {
-      case 'root': noteName = tones.root; break;
-      case 'third': noteName = tones.third; break;
-      case 'fifth': noteName = tones.fifth; break;
-      case 'seventh': noteName = tones.seventh; break;
-      case 'ninth': noteName = tones.extensions.ninth; break;
-      case 'eleventh': noteName = tones.extensions.eleventh; break;
-      case 'thirteenth': noteName = tones.extensions.thirteenth; break;
-      default: noteName = tones.root;
-    }
-
+  const chordTones = getExtendedChordTones({ root, quality });
+  return notes.map(note => {
+    const { name } = parseNote(note);
+    const role = getVoicingRoleForNoteName(chordTones, name as NoteName) ?? 'root';
     return {
-      id: `trainer-${role}`,
+      id: `trainer-${note}`,
       label: ROLE_LABEL_MAP[role],
-      note: noteName,
+      note: name as NoteName,
       voicingRole: role,
-      cssRole: ROLE_CSS_MAP[role],
+      cssRole: ROLE_CSS_MAP[role] ?? 'root',
       enabled: true,
       isExtension: isExtensionRole(role),
     };
   });
+}
+
+/**
+ * All chord tone notes across the keyboard range.
+ * Used to highlight available keys.
+ */
+function computeAvailableNotes(
+  root: NoteName,
+  quality: ChordQuality,
+  startOctave: number,
+  endOctave: number
+): Note[] {
+  const tones = getExtendedChordTones({ root, quality });
+  const noteNames = [tones.root, tones.third, tones.fifth, tones.seventh];
+  const available: Note[] = [];
+  for (let oct = startOctave; oct <= endOctave; oct++) {
+    for (const name of noteNames) {
+      available.push(`${name}${oct}` as Note);
+    }
+  }
+  return available;
 }
 
 // ============================================
@@ -172,37 +118,23 @@ function createBlocks(
 // ============================================
 
 export default function VoiceLeadingTrainer() {
-  // Key progress (persisted)
   const [keyProgress, setKeyProgress] = useState<KeyProgress>(() => loadKeyProgress());
 
-  // Trainer state
   const [trainerState, setTrainerState] = useState<TrainerState>(() => {
     const state = createTrainerState('C');
-    // Lock the ii chord with starter voicing
     const starterVoicing = getStarterVoicing('C');
     return {
       ...state,
-      builtVoicings: {
-        ...state.builtVoicings,
-        ii: starterVoicing,
-      },
-      progressionIndex: 1, // Start at V chord (ii is locked)
+      builtVoicings: { ...state.builtVoicings, ii: starterVoicing },
+      progressionIndex: 1,
     };
   });
 
-  // Current phase
   const [phase, setPhase] = useState<TrainerPhase>('building');
-
-  // Selected notes for current voicing
-  const [selectedRoles, setSelectedRoles] = useState<VoicingRole[]>([]);
-
-  // Last score (for display)
+  const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
   const [lastScore, setLastScore] = useState<VoicingScore | null>(null);
-
-  // Show key selector
   const [showKeySelector, setShowKeySelector] = useState(false);
 
-  // Derived data
   const chords = useMemo(
     () => getProgressionChords(trainerState.currentKey),
     [trainerState.currentKey]
@@ -210,29 +142,14 @@ export default function VoiceLeadingTrainer() {
 
   const currentChord = getCurrentTargetChord(trainerState);
 
-  const chordTones = useMemo(
-    () => getChordToneHints(currentChord.root, currentChord.quality),
+  const availableNotes = useMemo(
+    () => computeAvailableNotes(currentChord.root, currentChord.quality as ChordQuality, 3, 5),
     [currentChord.root, currentChord.quality]
   );
 
-  const extensions = useMemo(
-    () => getExtensionHints(currentChord.root, currentChord.quality),
-    [currentChord.root, currentChord.quality]
-  );
-
-  // Calculate current notes from selected roles
-  const currentNotes = useMemo(
-    () => calculateNotes(selectedRoles, currentChord.root, currentChord.quality as 'min7' | 'dom7' | 'maj7'),
-    [selectedRoles, currentChord.root, currentChord.quality]
-  );
-
-  // Get previous voicing notes for voice leading reference
   const previousNotes = useMemo(() => {
-    if (trainerState.progressionIndex === 1) {
-      return trainerState.builtVoicings.ii?.notes || [];
-    } else if (trainerState.progressionIndex === 2) {
-      return trainerState.builtVoicings.V?.notes || [];
-    }
+    if (trainerState.progressionIndex === 1) return trainerState.builtVoicings.ii?.notes ?? [];
+    if (trainerState.progressionIndex === 2) return trainerState.builtVoicings.V?.notes ?? [];
     return [];
   }, [trainerState.progressionIndex, trainerState.builtVoicings]);
 
@@ -240,91 +157,70 @@ export default function VoiceLeadingTrainer() {
   // HANDLERS
   // ============================================
 
-  const handleNoteToggle = useCallback((role: VoicingRole) => {
-    setSelectedRoles(prev => {
-      if (prev.includes(role)) {
-        return prev.filter(r => r !== role);
-      }
-      return [...prev, role];
-    });
-  }, []);
-
-  const handleRemoveNote = useCallback((role: VoicingRole) => {
-    setSelectedRoles(prev => prev.filter(r => r !== role));
+  const handleKeyClick = useCallback((note: Note) => {
+    setSelectedNotes(prev =>
+      prev.includes(note) ? prev.filter(n => n !== note) : [...prev, note]
+    );
   }, []);
 
   const handleSubmit = useCallback(() => {
-    if (selectedRoles.length < 2) return;
+    if (selectedNotes.length < 2) return;
 
-    // Create blocks for pattern detection
-    const blocks = createBlocks(
-      selectedRoles,
+    const blocks = createBlocksFromNotes(
+      selectedNotes,
       currentChord.root,
-      currentChord.quality as 'min7' | 'dom7' | 'maj7'
+      currentChord.quality as ChordQuality
     );
 
-    // Score the submission
     const score = scoreVoicingSubmission(
       previousNotes,
       blocks,
-      currentNotes,
+      selectedNotes,
       currentChord.quality
     );
 
     setLastScore(score);
     setPhase('scoring');
-  }, [selectedRoles, currentChord, previousNotes, currentNotes]);
+  }, [selectedNotes, currentChord, previousNotes]);
 
   const handleContinue = useCallback(() => {
     if (!lastScore) return;
 
-    // Create built voicing
     const voicing: BuiltVoicing = {
-      blocks: createBlocks(
-        selectedRoles,
+      blocks: createBlocksFromNotes(
+        selectedNotes,
         currentChord.root,
-        currentChord.quality as 'min7' | 'dom7' | 'maj7'
+        currentChord.quality as ChordQuality
       ),
-      notes: currentNotes,
+      notes: selectedNotes,
     };
 
-    // Advance the progression
     const newState = advanceProgression(trainerState, voicing, lastScore);
     setTrainerState(newState);
 
-    // Check if progression is complete
     if (isProgressionComplete(newState)) {
       setPhase('complete');
-
-      // Update key progress
       const totalScore = getTotalScore(newState);
       const newProgress = completeKey(trainerState.currentKey, totalScore, keyProgress);
       setKeyProgress(newProgress);
       saveKeyProgress(newProgress);
     } else {
-      // Move to next chord
       setPhase('building');
-      setSelectedRoles([]);
+      setSelectedNotes([]);
       setLastScore(null);
     }
-  }, [lastScore, selectedRoles, currentChord, currentNotes, trainerState, keyProgress]);
+  }, [lastScore, selectedNotes, currentChord, trainerState, keyProgress]);
 
   const handleKeySelect = useCallback((key: NoteName) => {
-    // Reset trainer state for new key
     const state = createTrainerState(key);
     const starterVoicing = getStarterVoicing(key);
-
     setTrainerState({
       ...state,
-      builtVoicings: {
-        ...state.builtVoicings,
-        ii: starterVoicing,
-      },
+      builtVoicings: { ...state.builtVoicings, ii: starterVoicing },
       progressionIndex: 1,
     });
-
     setPhase('building');
-    setSelectedRoles([]);
+    setSelectedNotes([]);
     setLastScore(null);
     setShowKeySelector(false);
   }, []);
@@ -366,24 +262,17 @@ export default function VoiceLeadingTrainer() {
       />
 
       {phase === 'building' && (
-        <>
-          <VoicingBuilder
-            selectedRoles={selectedRoles}
-            notes={currentNotes}
-            previousNotes={previousNotes}
-            chordSymbol={currentChord.symbol}
-            onRemoveNote={handleRemoveNote}
-            onSubmit={handleSubmit}
-            canSubmit={selectedRoles.length >= 2}
-          />
-
-          <NotePalette
-            chordTones={chordTones}
-            extensions={extensions}
-            selectedNotes={selectedRoles}
-            onNoteToggle={handleNoteToggle}
-          />
-        </>
+        <VoicingBuilder
+          selectedNotes={selectedNotes}
+          ghostNotes={previousNotes}
+          availableNotes={availableNotes}
+          chordRoot={currentChord.root}
+          chordQuality={currentChord.quality as ChordQuality}
+          chordSymbol={currentChord.symbol}
+          onKeyClick={handleKeyClick}
+          onSubmit={handleSubmit}
+          canSubmit={selectedNotes.length >= 2}
+        />
       )}
 
       {phase === 'scoring' && lastScore && (
@@ -398,9 +287,7 @@ export default function VoiceLeadingTrainer() {
           </p>
           <div className="trainer-complete__actions">
             <button onClick={handleRestart}>Try Again</button>
-            <button onClick={() => setShowKeySelector(true)}>
-              Choose Another Key
-            </button>
+            <button onClick={() => setShowKeySelector(true)}>Choose Another Key</button>
           </div>
         </div>
       )}

@@ -1,79 +1,104 @@
-/**
- * VoicingBuilder Component
- *
- * Work area showing the current voicing being built.
- * Displays selected notes as blocks and shows the piano keyboard visualization.
- */
-
 import React, { useMemo } from 'react';
 import { PianoKeyboard, type ActiveNote } from '../PianoKeyboard';
 import type { Note, VoicingRole } from '../../lib/voicingTemplates';
-import { formatVoicingRole } from '../../lib/noteUtils';
+import { getExtendedChordTones, parseNote, getVoicingRoleForNoteName } from '../../lib/core';
+import type { NoteName, ChordQuality } from '../../lib/chordCalculator';
+
+const ROLE_LABELS: Partial<Record<VoicingRole, string>> = {
+  root: 'R', third: '3', fifth: '5', seventh: '7',
+  ninth: '9', flatNinth: '♭9', sharpNinth: '♯9',
+  eleventh: '11', sharpEleventh: '♯11',
+  thirteenth: '13', flatThirteenth: '♭13',
+};
+
+const CHROMATIC_ORDER = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+function pitchValue(note: Note): number {
+  const { name, octave } = parseNote(note);
+  return octave * 12 + CHROMATIC_ORDER.indexOf(name);
+}
 
 interface VoicingBuilderProps {
-  selectedRoles: VoicingRole[];
-  notes: Note[];
-  previousNotes?: Note[];
+  selectedNotes: Note[];
+  ghostNotes?: Note[];
+  availableNotes?: Note[];
+  chordRoot: NoteName;
+  chordQuality: ChordQuality;
   chordSymbol: string;
-  onRemoveNote: (role: VoicingRole) => void;
+  onKeyClick: (note: Note) => void;
   onSubmit: () => void;
   canSubmit: boolean;
 }
 
 export function VoicingBuilder({
-  selectedRoles,
-  notes,
-  previousNotes = [],
+  selectedNotes,
+  ghostNotes = [],
+  availableNotes = [],
+  chordRoot,
+  chordQuality,
   chordSymbol,
-  onRemoveNote,
+  onKeyClick,
   onSubmit,
   canSubmit,
 }: VoicingBuilderProps) {
-  // Build active notes for keyboard display
+  const chordTones = useMemo(
+    () => getExtendedChordTones({ root: chordRoot, quality: chordQuality }),
+    [chordRoot, chordQuality]
+  );
+
+  // Build active notes for keyboard (selected notes with roles)
   const activeNotes = useMemo((): ActiveNote[] => {
-    return notes.map((note, i) => ({
-      note,
-      role: selectedRoles[i],
-      hand: 'right' as const,
-    }));
-  }, [notes, selectedRoles]);
+    return selectedNotes.map(note => {
+      const { name } = parseNote(note);
+      const role = getVoicingRoleForNoteName(chordTones, name as NoteName) ?? 'root';
+      return { note, role, hand: 'right' as const };
+    });
+  }, [selectedNotes, chordTones]);
+
+  // Sort selected notes by pitch for block display
+  const sortedSelected = useMemo(
+    () => [...selectedNotes].sort((a, b) => pitchValue(a) - pitchValue(b)),
+    [selectedNotes]
+  );
 
   return (
     <div className="voicing-builder">
       <div className="voicing-builder__header">
         <h3 className="voicing-builder__title">Build: {chordSymbol}</h3>
-        {previousNotes.length > 0 && (
-          <span className="voicing-builder__hint">
-            Previous chord shown in gray
-          </span>
+        {ghostNotes.length > 0 && (
+          <span className="voicing-builder__hint">Gray = previous chord</span>
         )}
       </div>
 
       <div className="voicing-builder__blocks">
-        {selectedRoles.length === 0 ? (
-          <p className="voicing-builder__empty">
-            Select notes from the palette below
-          </p>
+        {sortedSelected.length === 0 ? (
+          <p className="voicing-builder__empty">Click keys on the keyboard below</p>
         ) : (
-          selectedRoles.map((role, index) => (
-            <div key={role} className="voicing-block">
-              <span className="voicing-block__role">{formatVoicingRole(role)}</span>
-              <span className="voicing-block__note">{notes[index]?.replace(/\d/, '')}</span>
-              <button
-                className="voicing-block__remove"
-                onClick={() => onRemoveNote(role)}
-                aria-label={`Remove ${formatVoicingRole(role)}`}
+          sortedSelected.map(note => {
+            const { name } = parseNote(note);
+            const role = getVoicingRoleForNoteName(chordTones, name as NoteName);
+            const isOut = !role;
+            return (
+              <div
+                key={note}
+                className={`voicing-block${isOut ? ' voicing-block--out-of-chord' : ''}`}
               >
-                ×
-              </button>
-            </div>
-          ))
+                <span className="voicing-block__role">
+                  {isOut ? '?' : ROLE_LABELS[role!] ?? role}
+                </span>
+                <span className="voicing-block__note">{name}</span>
+              </div>
+            );
+          })
         )}
       </div>
 
       <div className="voicing-builder__keyboard">
         <PianoKeyboard
           activeNotes={activeNotes}
+          ghostNotes={ghostNotes}
+          availableNotes={availableNotes}
+          onClick={onKeyClick}
           startOctave={3}
           endOctave={5}
         />
@@ -87,10 +112,8 @@ export function VoicingBuilder({
         >
           Submit Voicing
         </button>
-        {!canSubmit && selectedRoles.length > 0 && selectedRoles.length < 2 && (
-          <p className="voicing-builder__warning">
-            Need at least 2 notes for a voicing
-          </p>
+        {!canSubmit && selectedNotes.length === 1 && (
+          <p className="voicing-builder__warning">Need at least 2 notes</p>
         )}
       </div>
     </div>

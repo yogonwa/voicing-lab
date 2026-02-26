@@ -607,3 +607,14 @@
     font-size: 1rem;
   }
 }
+
+.voicing-block--out-of-chord {
+  border-color: #fc8181;
+  background: #fff5f5;
+}
+.voicing-block--out-of-chord .voicing-block__role {
+  color: #e53e3e;
+}
+.voicing-block--out-of-chord .voicing-block__note {
+  color: #e53e3e;
+}
