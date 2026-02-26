@@ -1,19 +1,10 @@
-/**
- * FlashCard Component
- *
- * Displays a single drill question:
- *   - Chord symbol prompt
- *   - 4 multiple-choice answer buttons
- *   - Immediate feedback on selection
- *   - Piano keyboard highlight after answer
- *   - "Next" button to advance
- */
-
 import React, { useState } from 'react';
 import { PianoKeyboard } from '../PianoKeyboard';
 import type { ActiveNote } from '../PianoKeyboard';
 import { type DrillQuestion, isCorrectAnswer, QUALITY_LABELS } from '../../lib/drillGenerator';
 import { CHROMATIC_SCALE } from '../../lib/chordCalculator';
+import { getExtendedChordTones } from '../../lib/core';
+import type { NoteName } from '../../lib/chordCalculator';
 import type { Note } from '../../lib/core';
 
 // ============================================
@@ -31,45 +22,66 @@ interface FlashCardProps {
 // HELPERS
 // ============================================
 
-/** Map a display note name to a piano Note (with octave) for highlighting */
-function toHighlightNote(displayNote: string): Note | null {
-  // Convert flat names back to sharp for keyboard lookup
+/** Map display root name → internal NoteName (sharps only) */
+const DISPLAY_TO_NOTENAME: Record<string, NoteName> = {
+  'Bb': 'A#', 'Eb': 'D#', 'Ab': 'G#', 'Db': 'C#', 'Gb': 'F#',
+};
+
+function displayToNoteName(display: string): NoteName {
+  return (DISPLAY_TO_NOTENAME[display] ?? display) as NoteName;
+}
+
+/** Convert a display note name to a piano Note at octave 4 */
+function toNote(displayNote: string): Note | null {
   const FLAT_TO_SHARP: Record<string, string> = {
     'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
   };
   const noteName = FLAT_TO_SHARP[displayNote] ?? displayNote;
   if (!CHROMATIC_SCALE.includes(noteName as never)) return null;
-  // Place notes in octave 4 for display
   return `${noteName}4` as Note;
 }
 
-/** Build ActiveNote list for answer reveal */
+/**
+ * Build active notes for keyboard display after answer reveal.
+ *
+ * Shows all 4 chord tones (R/3/5/7) as 'context' (green).
+ * The specifically-asked tone(s) are shown as 'answer' (purple).
+ */
 function buildActiveNotes(question: DrillQuestion): ActiveNote[] {
-  const notes: ActiveNote[] = [];
+  const rootName = displayToNoteName(question.rootDisplay);
+  const tones = getExtendedChordTones({ root: rootName, quality: question.quality });
 
-  if (question.drillType === 'guide-tones') {
-    // Parse "X + Y" format
-    const parts = question.correctAnswer.split(' + ');
-    if (parts[0]) {
-      const note = toHighlightNote(parts[0]);
-      if (note) notes.push({ note, role: 'third', hand: 'right' });
-    }
-    if (parts[1]) {
-      const note = toHighlightNote(parts[1]);
-      if (note) notes.push({ note, role: 'seventh', hand: 'right' });
-    }
+  // Determine which note names are the "answer" (the specifically asked tone)
+  const answerNotes = new Set<string>();
+  if (question.drillType === 'third') {
+    answerNotes.add(tones.third);
+  } else if (question.drillType === 'seventh') {
+    answerNotes.add(tones.seventh);
   } else {
-    const note = toHighlightNote(question.correctAnswer);
-    if (note) {
-      notes.push({
-        note,
-        role: question.drillType === 'third' ? 'third' : 'seventh',
-        hand: 'right',
-      });
-    }
+    // guide-tones: both 3rd and 7th are the answer
+    answerNotes.add(tones.third);
+    answerNotes.add(tones.seventh);
   }
 
-  return notes;
+  const chordNotes = [
+    { noteName: tones.root, role: 'root' as const },
+    { noteName: tones.third, role: 'third' as const },
+    { noteName: tones.fifth, role: 'fifth' as const },
+    { noteName: tones.seventh, role: 'seventh' as const },
+  ];
+
+  const result: ActiveNote[] = [];
+  for (const { noteName, role } of chordNotes) {
+    const note = toNote(noteName);
+    if (!note) continue;
+    result.push({
+      note,
+      role,
+      hand: 'right',
+      variant: answerNotes.has(noteName) ? 'answer' : 'context',
+    });
+  }
+  return result;
 }
 
 /** Format chord symbol for display */
@@ -150,7 +162,10 @@ export function FlashCard({ question, onAnswer, onNext, nextLabel }: FlashCardPr
 
           {activeNotes.length > 0 && (
             <div className="flashcard__piano">
-              <p className="flashcard__piano-label">Correct answer on keyboard</p>
+              <p className="flashcard__piano-label">
+                Full chord · <span style={{ color: '#68d391' }}>■</span> chord tone ·{' '}
+                <span style={{ color: '#b794f4' }}>■</span> answer
+              </p>
               <PianoKeyboard
                 activeNotes={activeNotes}
                 startOctave={3}
