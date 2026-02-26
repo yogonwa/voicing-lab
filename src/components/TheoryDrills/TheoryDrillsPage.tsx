@@ -296,10 +296,19 @@ export function TheoryDrillsPage() {
             <div className="drill-progress__bar-wrap">
               <div className="drill-progress__bar" style={{ width: `${progress}%` }} />
             </div>
-            <span className="drill-progress__label">
-              {currentIndex + 1} / {queue.length}
-              {newCardIds.size > 0 && ` · ${newCardIds.size} new`}
-            </span>
+            <div className="drill-progress__controls">
+              <span className="drill-progress__label">
+                {currentIndex + 1} / {queue.length}
+                {newCardIds.size > 0 && ` · ${newCardIds.size} new`}
+              </span>
+              <button
+                className="drill-quit-btn"
+                onClick={() => setPageState('settings')}
+                aria-label="Quit drill session"
+              >
+                Quit
+              </button>
+            </div>
           </div>
 
           <FlashCard
