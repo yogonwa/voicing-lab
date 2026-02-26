@@ -224,3 +224,34 @@
     width: 4%;
   }
 }
+
+/* Ghost notes — prior chord, shown gray */
+.piano-key--ghost {
+  --key-color: #a0aec0;
+  opacity: 0.55;
+}
+.piano-key--ghost.piano-key--white {
+  background: #a0aec0 !important;
+}
+.piano-key--ghost.piano-key--black {
+  background: #718096 !important;
+}
+
+/* Available notes — chord tones for current chord, subtle tint */
+.piano-key--available.piano-key--white {
+  background: #ebf8ff;
+}
+.piano-key--available.piano-key--black {
+  background: #2c5282;
+}
+
+/* Clickable keyboard */
+.piano-key--clickable {
+  cursor: pointer;
+}
+.piano-key--clickable:hover.piano-key--white:not(.piano-key--active):not(.piano-key--ghost) {
+  background: #bee3f8;
+}
+.piano-key--clickable:hover.piano-key--black:not(.piano-key--active):not(.piano-key--ghost) {
+  background: #2b6cb0;
+}

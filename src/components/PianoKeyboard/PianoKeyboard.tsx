@@ -1,10 +1,3 @@
-/**
- * PianoKeyboard Component
- *
- * Visual piano keyboard displaying active notes with color-coded roles.
- * Renders 4 octaves (C2-B5) by default.
- */
-
 import React, { useMemo } from 'react';
 import './PianoKeyboard.css';
 import { PianoKey } from './PianoKey';
@@ -12,103 +5,83 @@ import { PianoKeyboardProps } from './types';
 import { findActiveNote } from './utils';
 import { Note } from '../../lib/core';
 
-// ============================================
-// CONSTANTS
-// ============================================
-
-/** Notes in one octave */
-/** White notes only */
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
-/** Black key positions as percentage of white key width from the left edge of each octave */
 const BLACK_KEY_POSITIONS: Record<string, number> = {
-  'C#': 0.75,   // After C
-  'D#': 1.75,   // After D
-  'F#': 3.75,   // After F
-  'G#': 4.75,   // After G
-  'A#': 5.75,   // After A
+  'C#': 0.75,
+  'D#': 1.75,
+  'F#': 3.75,
+  'G#': 4.75,
+  'A#': 5.75,
 };
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export function PianoKeyboard({
   activeNotes,
+  ghostNotes = [],
+  availableNotes = [],
+  onClick,
   startOctave = 2,
   endOctave = 5,
 }: PianoKeyboardProps) {
-  // Generate white and black keys
   const { whiteKeys, blackKeys } = useMemo(() => {
     const whites: { note: Note; octave: number; indexInOctave: number }[] = [];
     const blacks: { note: Note; octave: number; position: number }[] = [];
 
     for (let octave = startOctave; octave <= endOctave; octave++) {
-      // White keys
       WHITE_NOTES.forEach((noteName, idx) => {
-        whites.push({
-          note: `${noteName}${octave}` as Note,
-          octave,
-          indexInOctave: idx,
-        });
+        whites.push({ note: `${noteName}${octave}` as Note, octave, indexInOctave: idx });
       });
-
-      // Black keys
       Object.entries(BLACK_KEY_POSITIONS).forEach(([noteName, posInOctave]) => {
-        const octaveOffset = (octave - startOctave) * 7; // 7 white keys per octave
+        const octaveOffset = (octave - startOctave) * 7;
         const position = ((octaveOffset + posInOctave) / ((endOctave - startOctave + 1) * 7)) * 100;
-        blacks.push({
-          note: `${noteName}${octave}` as Note,
-          octave,
-          position,
-        });
+        blacks.push({ note: `${noteName}${octave}` as Note, octave, position });
       });
     }
 
     return { whiteKeys: whites, blackKeys: blacks };
   }, [startOctave, endOctave]);
 
+  const ghostSet = useMemo(() => new Set(ghostNotes), [ghostNotes]);
+  const availableSet = useMemo(() => new Set(availableNotes), [availableNotes]);
+
+  function renderKey(note: Note, isBlack: boolean) {
+    const activeNote = findActiveNote(note, activeNotes);
+    const isGhost = ghostSet.has(note);
+    const isAvailable = availableSet.has(note);
+
+    return (
+      <PianoKey
+        note={note}
+        isBlack={isBlack}
+        isActive={!!activeNote}
+        role={activeNote?.role}
+        hand={activeNote?.hand}
+        isGhost={isGhost}
+        isAvailable={isAvailable}
+        onClick={onClick ? () => onClick(note) : undefined}
+        variant={activeNote?.variant}
+      />
+    );
+  }
+
   return (
-    <div className="piano-keyboard" role="img" aria-label="Piano keyboard">
+    <div className="piano-keyboard" role={onClick ? 'group' : 'img'} aria-label="Piano keyboard">
       <div className="piano-keyboard__keys">
-        {/* White keys - use flexbox */}
-        {whiteKeys.map((key) => {
-          const activeNote = findActiveNote(key.note, activeNotes);
-          return (
-            <div key={key.note} className="piano-keyboard__key-wrapper--white">
-              <PianoKey
-                note={key.note}
-                isBlack={false}
-                isActive={!!activeNote}
-                role={activeNote?.role}
-                hand={activeNote?.hand}
-              />
-            </div>
-          );
-        })}
-
-        {/* Black keys - absolute positioning */}
-        {blackKeys.map((key) => {
-          const activeNote = findActiveNote(key.note, activeNotes);
-          return (
-            <div
-              key={key.note}
-              className="piano-keyboard__key-wrapper--black"
-              style={{ left: `${key.position}%` }}
-            >
-              <PianoKey
-                note={key.note}
-                isBlack={true}
-                isActive={!!activeNote}
-                role={activeNote?.role}
-                hand={activeNote?.hand}
-              />
-            </div>
-          );
-        })}
+        {whiteKeys.map((key) => (
+          <div key={key.note} className="piano-keyboard__key-wrapper--white">
+            {renderKey(key.note, false)}
+          </div>
+        ))}
+        {blackKeys.map((key) => (
+          <div
+            key={key.note}
+            className="piano-keyboard__key-wrapper--black"
+            style={{ left: `${key.position}%` }}
+          >
+            {renderKey(key.note, true)}
+          </div>
+        ))}
       </div>
-
-      {/* Octave markers */}
       <div className="piano-keyboard__octave-markers">
         {Array.from({ length: endOctave - startOctave + 1 }, (_, i) => (
           <span key={startOctave + i} className="piano-keyboard__octave-label">

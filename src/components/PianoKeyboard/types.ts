@@ -1,45 +1,41 @@
-/**
- * PianoKeyboard Types
- *
- * Shared type definitions for the piano keyboard components.
- */
-
 import { Note, VoicingRole } from '../../lib/core';
 
-// ============================================
-// TYPES
-// ============================================
-
-/** Which hand plays the note */
 export type Hand = 'left' | 'right';
 
-/** Active note with its role and hand assignment */
 export interface ActiveNote {
   note: Note;
   role: VoicingRole;
   hand: Hand;
+  /** Display override: 'context' = green background, 'answer' = purple highlight */
+  variant?: 'context' | 'answer';
 }
 
-/** Props for the main PianoKeyboard component */
 export interface PianoKeyboardProps {
   activeNotes: ActiveNote[];
+  /** Prior chord notes — shown gray, not interactive */
+  ghostNotes?: Note[];
+  /** Chord tones for current chord — shown with a subtle available-tint */
+  availableNotes?: Note[];
+  /** If provided, every key becomes clickable and fires this callback */
+  onClick?: (note: Note) => void;
   startOctave?: number;
   endOctave?: number;
 }
 
-/** Props for individual piano key */
 export interface PianoKeyProps {
   note: Note;
   isBlack: boolean;
   isActive: boolean;
   role?: VoicingRole;
   hand?: Hand;
+  isGhost?: boolean;
+  isAvailable?: boolean;
+  onClick?: () => void;
+  variant?: 'context' | 'answer';
 }
 
-/** Key layout information for rendering */
 export interface KeyLayout {
   note: Note;
   isBlack: boolean;
-  position: number; // x position as percentage
+  position: number;
 }
-
